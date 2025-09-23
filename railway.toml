@@ -1,0 +1,20 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "cd packages/bot && npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[[services]]
+name = "ticketmesh-bot"
+
+[services.source]
+repo = "Elenyx/cautious-parakeet"
+branch = "main"
+
+[services.variables]
+NODE_ENV = "production"
+PORT = "3000"

@@ -132,3 +132,4 @@ Thumbs.db
 # Lint output
 lint_output.txt
 lint_output2.txt
+node_modules
