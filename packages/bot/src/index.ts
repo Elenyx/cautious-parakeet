@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Collection, Events } from "discord.js";
 import { config } from "dotenv";
 import { glob } from "glob";
 import path from "path";
+import fs from "fs";
 
 import { DatabaseManager } from "./database/DatabaseManager.js";
 import { TranscriptUtil } from "./utils/TranscriptUtil.js";
@@ -20,17 +21,30 @@ const client = new Client({
 client.commands = new Collection();
 
 const loadCommands = async () => {
-    const commandsDir = path.join(process.cwd(), 'src', 'commands');
-    const commandsPath = path.join(commandsDir, '*.ts').replace(/\\/g, '/');
+    // Determine if we're running from compiled JS or source TS
+    const isProduction = process.env.NODE_ENV === 'production' || !fs.existsSync(path.join(process.cwd(), 'src'));
+    const sourceDir = isProduction ? 'dist' : 'src';
+    const fileExtension = isProduction ? 'js' : 'ts';
+    
+    const commandsDir = path.join(process.cwd(), sourceDir, 'commands');
+    const commandsPath = path.join(commandsDir, `*.${fileExtension}`).replace(/\\/g, '/');
     const commandFiles = await glob(commandsPath);
     
-    console.log(`Loading ${commandFiles.length} commands...`);
+    console.log(`Loading ${commandFiles.length} commands from ${sourceDir} directory...`);
     
     for (const file of commandFiles) {
         try {
-            // Convert Windows path to file:// URL for proper import
-            const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
-            const command = await import(fileUrl);
+            let command;
+            if (isProduction) {
+                // Use relative path for production (compiled JS)
+                const fileName = path.basename(file, '.js');
+                command = await import(`./commands/${fileName}.js`);
+            } else {
+                // Convert Windows path to file:// URL for development (TS files)
+                const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
+                command = await import(fileUrl);
+            }
+            
             if (command.data && command.execute) {
                 client.commands.set(command.data.name, command);
                 console.log(`Loaded command: ${command.data.name}`);
@@ -42,17 +56,30 @@ const loadCommands = async () => {
 };
 
 const loadEvents = async () => {
-    const eventsDir = path.join(process.cwd(), 'src', 'events');
-    const eventsPath = path.join(eventsDir, '*.ts').replace(/\\/g, '/');
+    // Determine if we're running from compiled JS or source TS
+    const isProduction = process.env.NODE_ENV === 'production' || !fs.existsSync(path.join(process.cwd(), 'src'));
+    const sourceDir = isProduction ? 'dist' : 'src';
+    const fileExtension = isProduction ? 'js' : 'ts';
+    
+    const eventsDir = path.join(process.cwd(), sourceDir, 'events');
+    const eventsPath = path.join(eventsDir, `*.${fileExtension}`).replace(/\\/g, '/');
     const eventFiles = await glob(eventsPath);
     
-    console.log(`Loading ${eventFiles.length} events...`);
+    console.log(`Loading ${eventFiles.length} events from ${sourceDir} directory...`);
     
     for (const file of eventFiles) {
         try {
-            // Convert Windows path to file:// URL for proper import
-            const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
-            const event = await import(fileUrl);
+            let event;
+            if (isProduction) {
+                // Use relative path for production (compiled JS)
+                const fileName = path.basename(file, '.js');
+                event = await import(`./events/${fileName}.js`);
+            } else {
+                // Convert Windows path to file:// URL for development (TS files)
+                const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
+                event = await import(fileUrl);
+            }
+            
             if (event.name && event.execute) {
                 if (event.once) {
                     client.once(event.name, (...args) => event.execute(...args, client));
