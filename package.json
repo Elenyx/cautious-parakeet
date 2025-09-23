@@ -1,0 +1,29 @@
+{
+  "name": "ticketmesh",
+  "version": "1.0.0",
+  "description": "A Discord ticket bot with modern web dashboard",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "build": "pnpm run --recursive build",
+    "lint": "pnpm run --recursive lint",
+    "type-check": "pnpm run --recursive type-check"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "tickets",
+    "dashboard",
+    "typescript"
+  ],
+  "author": "TicketMesh Team",
+  "license": "MIT",
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
