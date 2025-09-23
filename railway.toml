@@ -14,6 +14,7 @@ name = "ticketmesh-bot"
 [services.source]
 repo = "Elenyx/cautious-parakeet"
 branch = "main"
+rootDirectory = "packages/bot"
 
 [services.variables]
 NODE_ENV = "production"
