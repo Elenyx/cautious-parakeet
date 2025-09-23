@@ -294,6 +294,7 @@ export class TranscriptUtil {
     private async generateImprovedTXTTranscript(
         transcriptData: TranscriptData, 
         ticketChannel: TextChannel, 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
         _transcriptChannel: TextChannel
     ): Promise<string> {
         let txtContent = '';
