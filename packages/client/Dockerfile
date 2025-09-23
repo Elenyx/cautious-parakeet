@@ -9,8 +9,8 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy package files (client package.json and local lockfile)
-    COPY package.json ./
-    COPY pnpm-lock.yaml ./
+COPY package.json ./
+COPY pnpm-lock.yaml ./
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
