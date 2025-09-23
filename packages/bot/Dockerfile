@@ -7,9 +7,9 @@ RUN npm install -g pnpm
 # Set working directory
 WORKDIR /app
 
-# Copy package files (bot package.json and workspace lockfile)
-COPY package.json ./
-COPY ../../pnpm-lock.yaml ./
+# Copy package files (bot package.json and local lockfile)
+    COPY package.json ./
+    COPY pnpm-lock.yaml ./
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile --prod=false
