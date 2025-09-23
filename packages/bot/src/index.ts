@@ -20,14 +20,31 @@ const client = new Client({
 client.commands = new Collection();
 
 const loadCommands = async () => {
-    const commandFiles = await glob('./src/commands/*.ts');
-    console.log(`Loading ${commandFiles.length} commands...`);
+    // Check if we're in production by examining the current directory
+    // If this file is running from dist/, we're in production
+    const currentDir = __dirname || process.cwd();
+    const isProduction = currentDir.includes('/dist') || currentDir.includes('\\dist') || 
+                        process.env.NODE_ENV === 'production';
+    
+    const sourceDir = isProduction ? './dist' : './src';
+    const fileExtension = isProduction ? 'js' : 'ts';
+    const commandPattern = `${sourceDir}/commands/*.${fileExtension}`;
+    
+    const commandFiles = await glob(commandPattern);
+    console.log(`Loading ${commandFiles.length} commands from ${sourceDir}... (production: ${isProduction})`);
     
     for (const file of commandFiles) {
         try {
-            // Convert Windows path to file:// URL for proper import
-            const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
-            const command = await import(fileUrl);
+            let command;
+            if (isProduction) {
+                // In production, use relative imports for compiled JS files
+                const fileName = path.basename(file, '.js');
+                command = await import(`./commands/${fileName}.js`);
+            } else {
+                // In development, use file:// URL for TS files
+                const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
+                command = await import(fileUrl);
+            }
             
             if (command.data && command.execute) {
                 client.commands.set(command.data.name, command);
@@ -40,14 +57,31 @@ const loadCommands = async () => {
 };
 
 const loadEvents = async () => {
-    const eventFiles = await glob('./src/events/*.ts');
-    console.log(`Loading ${eventFiles.length} events...`);
+    // Check if we're in production by examining the current directory
+    // If this file is running from dist/, we're in production
+    const currentDir = __dirname || process.cwd();
+    const isProduction = currentDir.includes('/dist') || currentDir.includes('\\dist') || 
+                        process.env.NODE_ENV === 'production';
+    
+    const sourceDir = isProduction ? './dist' : './src';
+    const fileExtension = isProduction ? 'js' : 'ts';
+    const eventPattern = `${sourceDir}/events/*.${fileExtension}`;
+    
+    const eventFiles = await glob(eventPattern);
+    console.log(`Loading ${eventFiles.length} events from ${sourceDir}... (production: ${isProduction})`);
     
     for (const file of eventFiles) {
         try {
-            // Convert Windows path to file:// URL for proper import
-            const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
-            const event = await import(fileUrl);
+            let event;
+            if (isProduction) {
+                // In production, use relative imports for compiled JS files
+                const fileName = path.basename(file, '.js');
+                event = await import(`./events/${fileName}.js`);
+            } else {
+                // In development, use file:// URL for TS files
+                const fileUrl = `file://${path.resolve(file).replace(/\\/g, '/')}`;
+                event = await import(fileUrl);
+            }
             
             if (event.name && event.execute) {
                 if (event.once) {
