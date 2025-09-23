@@ -4,22 +4,19 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
-
 # Copy package files
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY package.json ./
 COPY packages/bot/package.json ./packages/bot/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies for the bot package
+WORKDIR /app/packages/bot
+RUN npm install
 
 # Copy source code
-COPY packages/bot ./packages/bot
+COPY packages/bot ./
 
 # Build the application
-WORKDIR /app/packages/bot
-RUN pnpm run build
+RUN npm run build
 
 # Create data directory for SQLite database
 RUN mkdir -p data
@@ -32,4 +29,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "console.log('Bot health check')" || exit 1
 
 # Start the application
-CMD ["pnpm", "run", "start"]
+CMD ["npm", "run", "start"]
