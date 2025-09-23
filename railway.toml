@@ -1,11 +1,4 @@
-[build]
-builder = "RAILPACK"
-
-[deploy]
-startCommand = "npm run start"
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
-
+# TicketMesh Bot Service
 [[services]]
 name = "ticketmesh-bot"
 
@@ -13,6 +6,34 @@ name = "ticketmesh-bot"
 repo = "Elenyx/cautious-parakeet"
 branch = "main"
 rootDirectory = "packages/bot"
+
+[services.build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[services.deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[services.variables]
+NODE_ENV = "production"
+
+# TicketMesh Client Service
+[[services]]
+name = "ticketmesh-client"
+
+[services.source]
+repo = "Elenyx/cautious-parakeet"
+branch = "main"
+rootDirectory = "packages/client"
+
+[services.build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[services.deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
 
 [services.variables]
 NODE_ENV = "production"

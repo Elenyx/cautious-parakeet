@@ -2,8 +2,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { AnimatedBackground } from "@/components/animated-background"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CalendarDays, GitCommit, Plus, Bug, Zap, Shield, Sparkles } from "lucide-react"
 
 /**
@@ -125,7 +124,7 @@ export default function ChangelogPage() {
 
           {/* Changelog Entries */}
           <div className="space-y-8">
-            {changelogEntries.map((entry, index) => (
+            {changelogEntries.map((entry) => (
               <Card key={entry.version} className="border-border/50 bg-card/50 backdrop-blur-sm">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between flex-wrap gap-4">

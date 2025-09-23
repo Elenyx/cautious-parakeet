@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
+import Image from "next/image"
 
 export function TestimonialsSection() {
   const testimonials = [
@@ -57,12 +58,14 @@ export function TestimonialsSection() {
                   ))}
                 </div>
 
-                <blockquote className="text-foreground mb-6 leading-relaxed">"{testimonial.content}"</blockquote>
+                <blockquote className="text-foreground mb-6 leading-relaxed">&ldquo;{testimonial.content}&rdquo;</blockquote>
 
                 <div className="flex items-center space-x-3">
-                  <img
+                  <Image
                     src={testimonial.avatar || "/placeholder.svg"}
                     alt={testimonial.name}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full border-2 border-border"
                   />
                   <div>

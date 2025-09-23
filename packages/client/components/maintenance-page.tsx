@@ -74,7 +74,7 @@ export function MaintenancePage({
               
               <h2 className="text-2xl font-semibold mb-4">Under Development</h2>
               <p className="text-muted-foreground mb-6">
-                We're working hard to bring you this feature. Our team is currently developing 
+                We&apos;re working hard to bring you this feature. Our team is currently developing 
                 and testing to ensure the best possible experience.
               </p>
 
@@ -117,7 +117,7 @@ export function MaintenancePage({
               <Link href="/changelog" className="text-primary hover:underline">
                 changelog
               </Link>{" "}
-              to see what we've been working on.
+              to see what we&apos;ve been working on.
             </p>
           </div>
         </div>
