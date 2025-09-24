@@ -7,17 +7,17 @@ import {
     ChannelType,
     OverwriteResolvable
 } from 'discord.js';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 
 /**
  * Permission utility for checking and managing Discord permissions
  */
 export class PermissionUtil {
     private static instance: PermissionUtil;
-    private guildConfigDAO: PostgreSQLGuildConfigDAO;
+    private guildConfigDAO: GuildConfigDAO;
 
     private constructor() {
-        this.guildConfigDAO = new PostgreSQLGuildConfigDAO();
+        this.guildConfigDAO = new GuildConfigDAO();
     }
 
     /**

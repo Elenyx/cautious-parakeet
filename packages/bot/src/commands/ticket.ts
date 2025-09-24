@@ -12,7 +12,7 @@ import {
     TextChannel,
     EmbedBuilder
 } from 'discord.js';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 
 export const data = new SlashCommandBuilder()
     .setName("ticket")
@@ -39,7 +39,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
  * Handle ticket panel deployment
  */
 async function handleDeploy(interaction: ChatInputCommandInteraction) {
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const guildId = interaction.guildId!;
 
     // Get guild configuration

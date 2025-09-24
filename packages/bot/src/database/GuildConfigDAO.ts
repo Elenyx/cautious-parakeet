@@ -1,37 +1,16 @@
+import { GuildConfig } from '@ticketmesh/types';
 import { DatabaseManager } from './DatabaseManager';
-import Database from 'better-sqlite3';
 
 /**
- * Database row interface for guild_configs table
+ * PostgreSQL row interface for guild_configs table
  */
-interface GuildConfigRow {
+interface PostgreSQLGuildConfigRow {
     guild_id: string;
     category_id?: string;
     panel_channel_id?: string;
     transcript_channel_id?: string;
     error_log_channel_id?: string;
     support_role_ids?: string; // JSON string
-    ticket_counter: number;
-    cleanup_enabled: number; // SQLite boolean as number
-    cleanup_after_hours: number;
-    cleanup_tickets_days?: number;
-    cleanup_logs_days?: number;
-    auto_close_inactive: number; // SQLite boolean as number
-    inactive_hours: number;
-    created_at?: string;
-    updated_at?: string;
-}
-
-/**
- * Guild configuration interface
- */
-export interface GuildConfig {
-    guild_id: string;
-    category_id?: string;
-    panel_channel_id?: string;
-    transcript_channel_id?: string;
-    error_log_channel_id?: string;
-    support_role_ids: string[]; // Array of role IDs
     ticket_counter: number;
     cleanup_enabled: boolean;
     cleanup_after_hours: number;
@@ -44,99 +23,68 @@ export interface GuildConfig {
 }
 
 /**
- * Data Access Object for Guild Configuration operations
+ * Data Access Object for guild configurations
  */
 export class GuildConfigDAO {
-    private db: Database.Database;
-    private getConfigStmt!: Database.Statement;
-    private upsertConfigStmt!: Database.Statement;
-    private updateCounterStmt!: Database.Statement;
-    private deleteConfigStmt!: Database.Statement;
-
-    constructor() {
-        this.db = DatabaseManager.getInstance().getDatabase();
-        this.prepareStatements();
-    }
+    private dbManager: DatabaseManager;
 
     /**
-     * Prepare SQL statements for better performance
+     * Constructs a new GuildConfigDAO instance
      */
-    private prepareStatements(): void {
-        this.getConfigStmt = this.db.prepare(`
-            SELECT * FROM guild_configs WHERE guild_id = ?
-        `);
-
-        this.upsertConfigStmt = this.db.prepare(`
-            INSERT INTO guild_configs (
-                guild_id, category_id, panel_channel_id, transcript_channel_id,
-                error_log_channel_id, support_role_ids, ticket_counter,
-                cleanup_enabled, cleanup_after_hours, auto_close_inactive,
-                inactive_hours, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(guild_id) DO UPDATE SET
-                category_id = excluded.category_id,
-                panel_channel_id = excluded.panel_channel_id,
-                transcript_channel_id = excluded.transcript_channel_id,
-                error_log_channel_id = excluded.error_log_channel_id,
-                support_role_ids = excluded.support_role_ids,
-                ticket_counter = excluded.ticket_counter,
-                cleanup_enabled = excluded.cleanup_enabled,
-                cleanup_after_hours = excluded.cleanup_after_hours,
-                auto_close_inactive = excluded.auto_close_inactive,
-                inactive_hours = excluded.inactive_hours,
-                updated_at = CURRENT_TIMESTAMP
-        `);
-
-        this.updateCounterStmt = this.db.prepare(`
-            UPDATE guild_configs 
-            SET ticket_counter = ticket_counter + 1, updated_at = CURRENT_TIMESTAMP
-            WHERE guild_id = ?
-        `);
-
-        this.deleteConfigStmt = this.db.prepare(`
-            DELETE FROM guild_configs WHERE guild_id = ?
-        `);
+    constructor() {
+        this.dbManager = DatabaseManager.getInstance();
     }
 
     /**
      * Get guild configuration by guild ID
      */
-    public getGuildConfig(guildId: string): GuildConfig | null {
+    public async getGuildConfig(guildId: string): Promise<GuildConfig | null> {
         try {
-            const row = this.getConfigStmt.get(guildId) as GuildConfigRow;
-            if (!row) return null;
+            const result = await this.dbManager.query(
+                'SELECT * FROM guild_configs WHERE guild_id = $1',
+                [guildId]
+            );
 
-            return {
-                guild_id: row.guild_id,
-                category_id: row.category_id,
-                panel_channel_id: row.panel_channel_id,
-                transcript_channel_id: row.transcript_channel_id,
-                error_log_channel_id: row.error_log_channel_id,
-                support_role_ids: row.support_role_ids ? JSON.parse(row.support_role_ids) : [],
-                ticket_counter: row.ticket_counter,
-                cleanup_enabled: Boolean(row.cleanup_enabled),
-                cleanup_after_hours: row.cleanup_after_hours,
-                cleanup_tickets_days: row.cleanup_tickets_days,
-                cleanup_logs_days: row.cleanup_logs_days,
-                auto_close_inactive: Boolean(row.auto_close_inactive),
-                inactive_hours: row.inactive_hours,
-                created_at: row.created_at,
-                updated_at: row.updated_at
-            };
+            if (result.rows.length === 0) {
+                return null;
+            }
+
+            const row = result.rows[0];
+            return this.mapRowToConfig(row);
         } catch (error) {
-            console.error('Error getting guild config:', error);
-            return null;
+            console.error('Error fetching guild config:', error);
+            throw error;
         }
     }
 
     /**
      * Create or update guild configuration
      */
-    public upsertGuildConfig(config: Partial<GuildConfig> & { guild_id: string }): boolean {
+    public async upsertGuildConfig(config: Partial<GuildConfig> & { guild_id: string }): Promise<GuildConfig> {
         try {
             const supportRoleIds = JSON.stringify(config.support_role_ids || []);
             
-            this.upsertConfigStmt.run(
+            const result = await this.dbManager.query(`
+                INSERT INTO guild_configs (
+                    guild_id, category_id, panel_channel_id, transcript_channel_id,
+                    error_log_channel_id, support_role_ids, ticket_counter,
+                    cleanup_enabled, cleanup_after_hours, auto_close_inactive,
+                    inactive_hours
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                ON CONFLICT(guild_id) DO UPDATE SET
+                    category_id = COALESCE(EXCLUDED.category_id, guild_configs.category_id),
+                    panel_channel_id = COALESCE(EXCLUDED.panel_channel_id, guild_configs.panel_channel_id),
+                    transcript_channel_id = COALESCE(EXCLUDED.transcript_channel_id, guild_configs.transcript_channel_id),
+                    error_log_channel_id = COALESCE(EXCLUDED.error_log_channel_id, guild_configs.error_log_channel_id),
+                    support_role_ids = COALESCE(EXCLUDED.support_role_ids, guild_configs.support_role_ids),
+                    ticket_counter = COALESCE(EXCLUDED.ticket_counter, guild_configs.ticket_counter),
+                    cleanup_enabled = COALESCE(EXCLUDED.cleanup_enabled, guild_configs.cleanup_enabled),
+                    cleanup_after_hours = COALESCE(EXCLUDED.cleanup_after_hours, guild_configs.cleanup_after_hours),
+                    auto_close_inactive = COALESCE(EXCLUDED.auto_close_inactive, guild_configs.auto_close_inactive),
+                    inactive_hours = COALESCE(EXCLUDED.inactive_hours, guild_configs.inactive_hours),
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING *
+            `, [
                 config.guild_id,
                 config.category_id || null,
                 config.panel_channel_id || null,
@@ -144,93 +92,138 @@ export class GuildConfigDAO {
                 config.error_log_channel_id || null,
                 supportRoleIds,
                 config.ticket_counter || 0,
-                config.cleanup_enabled ? 1 : 0,
+                config.cleanup_enabled || false,
                 config.cleanup_after_hours || 24,
-                config.auto_close_inactive ? 1 : 0,
+                config.auto_close_inactive || false,
                 config.inactive_hours || 72
-            );
+            ]);
 
-            return true;
+            return this.mapRowToConfig(result.rows[0]);
         } catch (error) {
             console.error('Error upserting guild config:', error);
-            return false;
+            throw error;
         }
     }
 
     /**
      * Increment ticket counter and return new value
      */
-    public incrementTicketCounter(guildId: string): number {
+    public async incrementTicketCounter(guildId: string): Promise<number> {
         try {
-            this.updateCounterStmt.run(guildId);
-            const config = this.getGuildConfig(guildId);
-            return config?.ticket_counter || 1;
+            const result = await this.dbManager.query(`
+                UPDATE guild_configs 
+                SET ticket_counter = ticket_counter + 1, updated_at = CURRENT_TIMESTAMP
+                WHERE guild_id = $1
+                RETURNING ticket_counter
+            `, [guildId]);
+
+            if (result.rows.length === 0) {
+                throw new Error(`Guild config not found for guild: ${guildId}`);
+            }
+
+            return result.rows[0].ticket_counter;
         } catch (error) {
             console.error('Error incrementing ticket counter:', error);
-            return 1;
+            throw error;
         }
     }
 
     /**
      * Delete guild configuration
      */
-    public deleteGuildConfig(guildId: string): boolean {
+    public async deleteGuildConfig(guildId: string): Promise<boolean> {
         try {
-            const result = this.deleteConfigStmt.run(guildId);
-            return result.changes > 0;
+            const result = await this.dbManager.query(
+                'DELETE FROM guild_configs WHERE guild_id = $1',
+                [guildId]
+            );
+
+            return (result.rowCount ?? 0) > 0;
         } catch (error) {
             console.error('Error deleting guild config:', error);
-            return false;
+            throw error;
         }
     }
 
     /**
-     * Check if guild is properly configured
+     * Get all guild configurations
      */
-    public isGuildConfigured(guildId: string): boolean {
-        const config = this.getGuildConfig(guildId);
-        return !!(config && 
-                 config.category_id && 
-                 config.panel_channel_id && 
-                 config.transcript_channel_id && 
-                 config.support_role_ids.length > 0);
-    }
-
-    /**
-     * Get all configured guilds
-     */
-    public getAllConfiguredGuilds(): GuildConfig[] {
+    public async getAllGuildConfigs(): Promise<GuildConfig[]> {
         try {
-            const stmt = this.db.prepare('SELECT * FROM guild_configs');
-            const rows = stmt.all() as GuildConfigRow[];
-            
-            return rows.map(row => ({
-                guild_id: row.guild_id,
-                category_id: row.category_id,
-                panel_channel_id: row.panel_channel_id,
-                transcript_channel_id: row.transcript_channel_id,
-                error_log_channel_id: row.error_log_channel_id,
-                support_role_ids: row.support_role_ids ? JSON.parse(row.support_role_ids) : [],
-                ticket_counter: row.ticket_counter,
-                cleanup_enabled: Boolean(row.cleanup_enabled),
-                cleanup_after_hours: row.cleanup_after_hours,
-                cleanup_tickets_days: row.cleanup_tickets_days,
-                cleanup_logs_days: row.cleanup_logs_days,
-                auto_close_inactive: Boolean(row.auto_close_inactive),
-                inactive_hours: row.inactive_hours,
-                created_at: row.created_at,
-                updated_at: row.updated_at
-            }));
+            const result = await this.dbManager.query('SELECT * FROM guild_configs ORDER BY created_at DESC');
+            return result.rows.map((row: PostgreSQLGuildConfigRow) => this.mapRowToConfig(row));
         } catch (error) {
-            console.error('Error getting all guild configs:', error);
-            return [];
+            console.error('Error fetching all guild configs:', error);
+            throw error;
         }
     }
 
     /**
-     * Alias for getAllConfiguredGuilds - used by CleanupHandler
+     * Update specific fields of guild configuration
      */
-    public getAllGuildConfigs(): GuildConfig[] {
-        return this.getAllConfiguredGuilds();
+    public async updateGuildConfig(guildId: string, updates: Partial<Omit<GuildConfig, 'guild_id'>>): Promise<GuildConfig | null> {
+        try {
+            const fields: string[] = [];
+            const values: unknown[] = [];
+            let paramIndex = 1;
+
+            // Build dynamic update query
+            Object.entries(updates).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    if (key === 'support_role_ids') {
+                        fields.push(`${key} = $${paramIndex}`);
+                        values.push(JSON.stringify(value));
+                    } else {
+                        fields.push(`${key} = $${paramIndex}`);
+                        values.push(value);
+                    }
+                    paramIndex++;
+                }
+            });
+
+            if (fields.length === 0) {
+                return await this.getGuildConfig(guildId);
+            }
+
+            fields.push('updated_at = CURRENT_TIMESTAMP');
+            values.push(guildId);
+
+            const result = await this.dbManager.query(`
+                UPDATE guild_configs 
+                SET ${fields.join(', ')}
+                WHERE guild_id = $${paramIndex}
+                RETURNING *
+            `, values);
+
+            if (result.rows.length === 0) {
+                return null;
+            }
+
+            return this.mapRowToConfig(result.rows[0]);
+        } catch (error) {
+            console.error('Error updating guild config:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Map database row to GuildConfig object
+     */
+    private mapRowToConfig(row: PostgreSQLGuildConfigRow): GuildConfig {
+        return {
+            guild_id: row.guild_id,
+            category_id: row.category_id,
+            panel_channel_id: row.panel_channel_id,
+            transcript_channel_id: row.transcript_channel_id,
+            error_log_channel_id: row.error_log_channel_id,
+            support_role_ids: row.support_role_ids ? JSON.parse(row.support_role_ids) : [],
+            ticket_counter: row.ticket_counter,
+            cleanup_enabled: row.cleanup_enabled,
+            cleanup_after_hours: row.cleanup_after_hours,
+            auto_close_inactive: row.auto_close_inactive,
+            inactive_hours: row.inactive_hours,
+            created_at: row.created_at,
+            updated_at: row.updated_at
+        };
     }
 }

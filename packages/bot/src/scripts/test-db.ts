@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { config } from 'dotenv';
-import { PostgreSQLManager } from '../database/PostgreSQLManager';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { DatabaseManager } from '../database/DatabaseManager';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 
 // Load environment variables
 config();
@@ -37,7 +37,7 @@ async function main() {
     try {
         // Test 1: Database connection
         console.log('\n1️⃣ Testing database connection...');
-        const dbManager = PostgreSQLManager.getInstance();
+        const dbManager = DatabaseManager.getInstance();
         const result = await dbManager.query('SELECT NOW() as current_time');
         console.log('✅ Database connected successfully');
         console.log(`   Current time: ${result.rows[0].current_time}`);
@@ -55,7 +55,7 @@ async function main() {
 
         // Test 3: Test GuildConfigDAO
         console.log('\n3️⃣ Testing GuildConfigDAO...');
-        const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+        const guildConfigDAO = new GuildConfigDAO();
         
         // Create a test guild config
         const testGuildId = 'test_guild_123456789';

@@ -18,9 +18,8 @@
     "db:test-full": "tsx src/scripts/test-db.ts"
   },
   "dependencies": {
+    "@ticketmesh/types": "workspace:*",
     "@discordjs/rest": "^2.6.0",
-    "@types/better-sqlite3": "^7.6.13",
-    "better-sqlite3": "^12.4.1",
     "discord-api-types": "^0.38.26",
     "discord.js": "^14.14.1",
     "discraft": "^1.7.8",

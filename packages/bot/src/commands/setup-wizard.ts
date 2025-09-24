@@ -18,7 +18,7 @@ import {
     ChannelSelectMenuInteraction,
     RoleSelectMenuInteraction
 } from 'discord.js';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { ErrorLogger } from '../utils/ErrorLogger';
 
 /**
@@ -66,7 +66,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
  * Show the main setup wizard interface
  */
 export async function showSetupWizard(interaction: ChatInputCommandInteraction | ButtonInteraction | ChannelSelectMenuInteraction | RoleSelectMenuInteraction) {
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const guildId = interaction.guildId!;
     
     // Get current configuration to show progress
@@ -347,7 +347,7 @@ export async function showSupportRolesSetup(interaction: ButtonInteraction) {
  * Show advanced settings interface
  */
 export async function showAdvancedSetup(interaction: ButtonInteraction) {
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const config = await guildConfigDAO.getGuildConfig(interaction.guildId!);
 
     const components = [

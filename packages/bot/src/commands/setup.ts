@@ -8,7 +8,7 @@ import {
     TextChannel,
     Role
 } from 'discord.js';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
 
@@ -129,7 +129,7 @@ export const data = new SlashCommandBuilder()
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const permissionUtil = PermissionUtil.getInstance();
     const errorLogger = ErrorLogger.getInstance();
 
@@ -194,7 +194,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
  */
 async function handleCategorySetup(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO,
+    guildConfigDAO: GuildConfigDAO,
     permissionUtil: PermissionUtil
 ) {
     const category = interaction.options.getChannel('category') as CategoryChannel;
@@ -243,7 +243,7 @@ async function handleCategorySetup(
  */
 async function handlePanelSetup(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const channel = interaction.options.getChannel('channel') as TextChannel;
     const guildId = interaction.guildId!;
@@ -279,7 +279,7 @@ async function handlePanelSetup(
  */
 async function handleTranscriptSetup(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const channel = interaction.options.getChannel('channel') as TextChannel;
     const guildId = interaction.guildId!;
@@ -315,7 +315,7 @@ async function handleTranscriptSetup(
  */
 async function handleErrorLogSetup(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const channel = interaction.options.getChannel('channel') as TextChannel;
     const guildId = interaction.guildId!;
@@ -351,7 +351,7 @@ async function handleErrorLogSetup(
  */
 async function handleSupportRoleSetup(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO,
+    guildConfigDAO: GuildConfigDAO,
     permissionUtil: PermissionUtil
 ) {
     const action = interaction.options.getString('action', true);
@@ -499,7 +499,7 @@ async function handleSupportRoleSetup(
  */
 async function handleCleanupSetup(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const ticketDays = interaction.options.getInteger('ticket_days');
     const logDays = interaction.options.getInteger('log_days');
@@ -546,7 +546,7 @@ async function handleCleanupSetup(
  */
 async function handleViewConfig(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const guildId = interaction.guildId!;
     const config = await guildConfigDAO.getGuildConfig(guildId);
@@ -604,7 +604,7 @@ async function handleViewConfig(
     if (config.support_role_ids && config.support_role_ids.length > 0) {
         embed.addFields({
             name: '👥 Support Roles',
-            value: config.support_role_ids.map(id => `<@&${id}>`).join('\n'),
+            value: config.support_role_ids.map((id: string) => `<@&${id}>`).join('\n'),
             inline: false
         });
     }
@@ -642,7 +642,7 @@ async function handleViewConfig(
  */
 async function handleResetConfig(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const confirm = interaction.options.getBoolean('confirm', true);
     const guildId = interaction.guildId!;

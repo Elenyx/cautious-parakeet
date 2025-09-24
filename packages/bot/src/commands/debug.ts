@@ -4,7 +4,7 @@ import {
     PermissionFlagsBits,
     EmbedBuilder
 } from 'discord.js';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { TranscriptUtil } from '../utils/TranscriptUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
 
@@ -36,7 +36,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const subcommand = interaction.options.getSubcommand();
 
     try {
-        const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+        const guildConfigDAO = new GuildConfigDAO();
         
         switch (subcommand) {
             case 'config':
@@ -74,7 +74,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
  */
 async function handleConfigDebug(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const guildId = interaction.guildId!;
     
@@ -121,7 +121,7 @@ async function handleConfigDebug(
         if (config.support_role_ids && config.support_role_ids.length > 0) {
             embed.addFields({
                 name: '✅ Support Roles',
-                value: config.support_role_ids.map(id => `<@&${id}>`).join('\n'),
+                value: config.support_role_ids.map((id: string) => `<@&${id}>`).join('\n'),
                 inline: false
             });
         } else {
@@ -151,7 +151,7 @@ async function handleConfigDebug(
  */
 async function handleTranscriptDebug(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO
+    guildConfigDAO: GuildConfigDAO
 ) {
     const ticketId = interaction.options.getString('ticket_id', true);
     const guildId = interaction.guildId!;

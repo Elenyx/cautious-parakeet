@@ -5,8 +5,8 @@ import {
     AttachmentBuilder, 
     Client
 } from 'discord.js';
-import { PostgreSQLTicketDAO } from '../database/PostgreSQLTicketDAO';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { TicketDAO } from '../database/TicketDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { ErrorLogger } from './ErrorLogger';
 
 /**
@@ -60,14 +60,14 @@ export interface TranscriptMessage {
  */
 export class TranscriptUtil {
     private static instance: TranscriptUtil;
-    private ticketDAO: PostgreSQLTicketDAO;
-    private guildConfigDAO: PostgreSQLGuildConfigDAO;
+    private ticketDAO: TicketDAO;
+    private guildConfigDAO: GuildConfigDAO;
     private errorLogger: ErrorLogger;
     private client: Client | null = null;
 
     private constructor() {
-        this.ticketDAO = new PostgreSQLTicketDAO();
-        this.guildConfigDAO = new PostgreSQLGuildConfigDAO();
+        this.ticketDAO = new TicketDAO();
+        this.guildConfigDAO = new GuildConfigDAO();
         this.errorLogger = ErrorLogger.getInstance();
     }
 

@@ -22,7 +22,7 @@ import {
     SeparatorSpacingSize,
     ContainerBuilder
 } from 'discord.js';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { 
     showSetupWizard, 
@@ -125,7 +125,7 @@ export async function handleSetupChannelSelect(interaction: ChannelSelectMenuInt
         return;
     }
 
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const guildId = interaction.guildId!;
     const selectedChannel = interaction.channels.first()!;
     const customId = interaction.customId;
@@ -177,7 +177,7 @@ export async function handleSetupRoleSelect(interaction: RoleSelectMenuInteracti
  */
 async function handleCategorySelection(
     interaction: ChannelSelectMenuInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO,
+    guildConfigDAO: GuildConfigDAO,
     category: CategoryChannel,
     guildId: string
 ) {
@@ -226,7 +226,7 @@ async function handleCategorySelection(
  */
 async function handlePanelChannelSelection(
     interaction: ChannelSelectMenuInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO,
+    guildConfigDAO: GuildConfigDAO,
     channel: TextChannel,
     guildId: string
 ) {
@@ -261,7 +261,7 @@ async function handlePanelChannelSelection(
  */
 async function handleTranscriptChannelSelection(
     interaction: ChannelSelectMenuInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO,
+    guildConfigDAO: GuildConfigDAO,
     channel: TextChannel,
     guildId: string
 ) {
@@ -296,7 +296,7 @@ async function handleTranscriptChannelSelection(
  */
 async function handleErrorLogChannelSelection(
     interaction: ChannelSelectMenuInteraction,
-    guildConfigDAO: PostgreSQLGuildConfigDAO,
+    guildConfigDAO: GuildConfigDAO,
     channel: TextChannel,
     guildId: string
 ) {
@@ -330,7 +330,7 @@ async function handleErrorLogChannelSelection(
  * Handle support roles selection
  */
 async function handleSupportRolesSelection(interaction: RoleSelectMenuInteraction) {
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const guildId = interaction.guildId!;
     const selectedRoles = interaction.roles;
 
@@ -429,7 +429,7 @@ async function showCleanupModal(interaction: ButtonInteraction) {
  * Handle panel deployment
  */
 async function handlePanelDeployment(interaction: ButtonInteraction) {
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const guildId = interaction.guildId!;
     
     // Get configuration
@@ -485,7 +485,7 @@ async function handlePanelDeployment(interaction: ButtonInteraction) {
  * Handle cleanup modal submission
  */
 export async function handleCleanupModal(interaction: ModalSubmitInteraction) {
-    const guildConfigDAO = new PostgreSQLGuildConfigDAO();
+    const guildConfigDAO = new GuildConfigDAO();
     const guildId = interaction.guildId!;
     
     const ticketDays = interaction.fields.getTextInputValue('ticket_days');

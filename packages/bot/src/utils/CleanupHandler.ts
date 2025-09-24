@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
-import { PostgreSQLTicketDAO } from '../database/PostgreSQLTicketDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
+import { TicketDAO } from '../database/TicketDAO';
 import { ErrorLogger } from './ErrorLogger';
 import { TranscriptUtil } from './TranscriptUtil';
 
@@ -30,15 +30,15 @@ interface CleanupStats {
  */
 export class CleanupHandler {
     private static instance: CleanupHandler;
-    private guildConfigDAO: PostgreSQLGuildConfigDAO;
-    private ticketDAO: PostgreSQLTicketDAO;
+    private guildConfigDAO: GuildConfigDAO;
+    private ticketDAO: TicketDAO;
     private errorLogger: ErrorLogger;
     private transcriptUtil: TranscriptUtil;
     private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
     private constructor() {
-        this.guildConfigDAO = new PostgreSQLGuildConfigDAO();
-        this.ticketDAO = new PostgreSQLTicketDAO();
+        this.guildConfigDAO = new GuildConfigDAO();
+        this.ticketDAO = new TicketDAO();
         this.errorLogger = ErrorLogger.getInstance();
         this.transcriptUtil = TranscriptUtil.getInstance();
     }

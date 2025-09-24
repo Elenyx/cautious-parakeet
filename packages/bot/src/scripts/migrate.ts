@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { config } from 'dotenv';
-import { PostgreSQLManager } from '../database/PostgreSQLManager';
+import { DatabaseManager } from '../database/DatabaseManager';
 import { MigrationManager } from '../database/MigrationManager';
 
 // Load environment variables
@@ -75,9 +75,9 @@ async function runMigrations(): Promise<void> {
 async function runSeeds(): Promise<void> {
     console.log('🌱 Starting database seeding...');
     
-    const postgresManager = PostgreSQLManager.getInstance();
-    await postgresManager.runSeeds();
-    await postgresManager.close();
+    const dbManager = DatabaseManager.getInstance();
+    await dbManager.runSeeds();
+    await dbManager.close();
     
     console.log('✅ Seeding completed successfully');
 }

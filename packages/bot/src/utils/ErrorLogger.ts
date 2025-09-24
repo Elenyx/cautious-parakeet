@@ -1,4 +1,4 @@
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { Client, TextChannel, EmbedBuilder, Interaction } from 'discord.js';
 
 /**
@@ -19,11 +19,11 @@ export interface ErrorLog {
  */
 export class ErrorLogger {
     private static instance: ErrorLogger;
-    private guildConfigDAO: PostgreSQLGuildConfigDAO;
+    private guildConfigDAO: GuildConfigDAO;
     private client: Client | null = null;
 
     private constructor() {
-        this.guildConfigDAO = new PostgreSQLGuildConfigDAO();
+        this.guildConfigDAO = new GuildConfigDAO();
     }
 
     /**

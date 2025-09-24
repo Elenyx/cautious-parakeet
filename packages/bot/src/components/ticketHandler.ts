@@ -12,8 +12,8 @@ import {
     SeparatorBuilder,
     SeparatorSpacingSize
 } from "discord.js";
-import { PostgreSQLGuildConfigDAO } from '../database/PostgreSQLGuildConfigDAO';
-import { PostgreSQLTicketDAO } from '../database/PostgreSQLTicketDAO';
+import { GuildConfigDAO } from '../database/GuildConfigDAO';
+import { TicketDAO } from '../database/TicketDAO';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
 import { TranscriptUtil } from '../utils/TranscriptUtil';
@@ -47,8 +47,8 @@ const ticketTypes = [
 ];
 
 export class TicketHandler {
-    private static guildConfigDAO = new PostgreSQLGuildConfigDAO();
-    private static ticketDAO = new PostgreSQLTicketDAO();
+    private static guildConfigDAO = new GuildConfigDAO();
+    private static ticketDAO = new TicketDAO();
     private static permissionUtil = PermissionUtil.getInstance();
     private static errorLogger = ErrorLogger.getInstance();
     private static transcriptUtil = TranscriptUtil.getInstance();

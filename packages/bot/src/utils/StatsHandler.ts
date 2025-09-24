@@ -1,5 +1,5 @@
 import { EmbedBuilder, Guild } from 'discord.js';
-import { PostgreSQLTicketDAO } from '../database/PostgreSQLTicketDAO';
+import { TicketDAO } from '../database/TicketDAO';
 import { ErrorLogger } from './ErrorLogger';
 
 /**
@@ -58,11 +58,11 @@ interface GuildStatistics {
  */
 export class StatsHandler {
     private static instance: StatsHandler;
-    private ticketDAO: PostgreSQLTicketDAO;
+    private ticketDAO: TicketDAO;
     private errorLogger: ErrorLogger;
 
     private constructor() {
-        this.ticketDAO = new PostgreSQLTicketDAO();
+        this.ticketDAO = new TicketDAO();
         this.errorLogger = ErrorLogger.getInstance();
     }
 
