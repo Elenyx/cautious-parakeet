@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Collection, Events } from "discord.js";
 import { config } from "dotenv";
 import { glob } from "glob";
 import path from "path";
+import process from 'process';
 
 import { DatabaseManager } from "./database/DatabaseManager.js";
 import { TranscriptUtil } from "./utils/TranscriptUtil.js";
@@ -95,13 +96,55 @@ const loadEvents = async () => {
     }
 };
 
-client.once(Events.ClientReady, () => {
+// Log process info and handle unexpected exits/errors for diagnostics
+console.log(`[BOOT] PID=${process.pid} NODE_ENV=${process.env.NODE_ENV} PORT=${process.env.PORT}`);
+process.on('beforeExit', (code) => {
+  console.warn(`[PROCESS] beforeExit with code ${code}`);
+});
+process.on('exit', (code) => {
+  console.warn(`[PROCESS] exit with code ${code}`);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[PROCESS] uncaughtException:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[PROCESS] unhandledRejection:', reason);
+});
+process.on('SIGINT', () => {
+  console.warn('[PROCESS] SIGINT received');
+});
+process.on('SIGTERM', () => {
+  console.warn('[PROCESS] SIGTERM received');
+});
+
+client.once(Events.ClientReady, async () => {
     console.log("Bot is ready!");
+    console.log(`[READY] PID=${process.pid}`);
     
     // Initialize utility classes with Discord client
     TranscriptUtil.getInstance().setClient(client);
     ErrorLogger.getInstance().setClient(client);
     console.log("Utility classes initialized with Discord client");
+
+    // Start internal HTTP server for dashboard data
+    try {
+        // Determine environment similar to commands/events loader
+        const currentDir = __dirname || process.cwd();
+        const isProduction = currentDir.includes('/dist') || currentDir.includes('\\dist') || 
+                             process.env.NODE_ENV === 'production';
+
+        if (isProduction) {
+            const { startHttpServer } = await import('./server/http.js');
+            await startHttpServer(client);
+        } else {
+            // In development, import the TypeScript source via file URL
+            const devFileUrl = `file://${path.resolve('./src/server/http.ts').replace(/\\/g, '/')}`;
+            const { startHttpServer } = await import(devFileUrl);
+            await startHttpServer(client);
+        }
+    } catch (err) {
+        console.error('Failed to start HTTP server:', err);
+    }
 });
 
 

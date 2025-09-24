@@ -1,11 +1,17 @@
-1. THIS IS A MONOREPO PROJECT.
+# Project Rules
+
+This is a monorepo project.
 2. ALWAYS RUN TERMINAL WITH PATH:
+
 - /packages/bot
 - /packages/client
+
 3. DO NOT RUN SCRIPTS FROM ROOT DIRECTORY.
 4. STOP BUILDING FROM ROOT DIRECTORY.
 5. RESPECT SEPARATE DEPLOYMENT BETWEEN BOT AND CLIENT.
 6. ALWAYS PUSH TO GITHUB.
+7. DO NOT STOP UNTIL CODE IS FIX.
+8. ALWAYS CHECK AND FIX PROBLEMS AND ISSUES UNTIL CODE IS HEALTHY.
 
 # Display Components
 
@@ -19,14 +25,14 @@ To use the display components, you need to pass the **IsComponentsV2** message f
 
 Opting into using this system by passing `IsComponentsV2` comes with a set of caveats:
 
-* You **cannot** send content, poll, embeds, or stickers.
-* You **cannot opt out** of using display components when editing a message.
-* You **can opt in** to using display components when editing a message while explicitly setting content, poll, embeds, and stickers to `null`.
-* Messages can have up to **40 total components** (nested components count!).
-* The amount of text across all text display components cannot exceed **4000 characters**.
-* All attached files must explicitly be referenced in a component (e.g., Thumbnail, Media Gallery, File).
-* All components can be passed an optional, unique `id` field (32-bit integer). This is different from `custom_id` for interactive components.
-* If `id` is not specified, Discord will automatically assign sequential values starting from 1. (`id: 0` is treated as empty).
+- You **cannot** send content, poll, embeds, or stickers.
+- You **cannot opt out** of using display components when editing a message.
+- You **can opt in** to using display components when editing a message while explicitly setting content, poll, embeds, and stickers to `null`.
+- Messages can have up to **40 total components** (nested components count!).
+- The amount of text across all text display components cannot exceed **4000 characters**.
+- All attached files must explicitly be referenced in a component (e.g., Thumbnail, Media Gallery, File).
+- All components can be passed an optional, unique `id` field (32-bit integer). This is different from `custom_id` for interactive components.
+- If `id` is not specified, Discord will automatically assign sequential values starting from 1. (`id: 0` is treated as empty).
 
 If you want to work with the `id` (e.g., find and replace content later), you should **explicitly specify it**.
 

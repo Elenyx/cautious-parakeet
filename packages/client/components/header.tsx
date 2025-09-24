@@ -4,15 +4,10 @@ import { Button } from "@/components/ui/button"
 import { StatusIndicator } from "@/components/status-indicator"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useSession, signIn, signOut } from "next-auth/react"
 
 export function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  const handleDiscordLogin = () => {
-    // Simulate login - in real app this would redirect to Discord OAuth
-    setIsLoggedIn(true)
-  }
+  const { data: session } = useSession()
 
   return (
     <header className="border-b border-border/50 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
@@ -39,7 +34,7 @@ export function Header() {
             <Link href="/documentation" className="text-muted-foreground hover:text-foreground transition-colors">
               Documentation
             </Link>
-            {isLoggedIn && (
+            {session && (
               <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
                 Dashboard
               </Link>
@@ -55,13 +50,32 @@ export function Header() {
               <StatusIndicator service="web" />
             </div>
 
-            <Button
-              variant="outline"
-              className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground bg-transparent"
-              onClick={handleDiscordLogin}
-            >
-              {isLoggedIn ? "Logged in to Discord" : "Login to Discord"}
-            </Button>
+            {session ? (
+              <div className="flex items-center space-x-4">
+                <Image
+                  src={session.user?.image as string}
+                  alt={session.user?.name as string}
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+                <Button
+                  variant="outline"
+                  className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground bg-transparent"
+                  onClick={() => signOut()}
+                >
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground bg-transparent"
+                onClick={() => signIn("discord")}
+              >
+                Login to Discord
+              </Button>
+            )}
           </div>
         </div>
 

@@ -25,6 +25,11 @@ COPY . .
 # Build the application
 RUN pnpm run build
 
+# Copy SQL migrations and seeds into the compiled dist directory for runtime
+RUN mkdir -p dist/database/migrations dist/database/seeds && \
+    (cp -r src/database/migrations/* dist/database/migrations/ 2>/dev/null || true) && \
+    (cp -r src/database/seeds/* dist/database/seeds/ 2>/dev/null || true)
+
 # Production stage
 FROM node:20-alpine AS production
 

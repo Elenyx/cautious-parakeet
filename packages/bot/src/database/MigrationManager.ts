@@ -32,8 +32,11 @@ export class MigrationManager {
         });
 
         // Set migration and seed paths
-        this.migrationsPath = path.join(process.cwd(), 'src', 'database', 'migrations');
-        this.seedsPath = path.join(process.cwd(), 'src', 'database', 'seeds');
+        // Use __dirname so that in development it resolves to src/database,
+        // and in production it resolves to dist/database after compilation.
+        const baseDir = __dirname;
+        this.migrationsPath = path.join(baseDir, 'migrations');
+        this.seedsPath = path.join(baseDir, 'seeds');
 
         // Ensure directories exist
         this.ensureDirectories();
