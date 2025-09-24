@@ -48,7 +48,7 @@ export async function handleSetupWizardInteraction(interaction: ButtonInteractio
         return true;
     }
     
-    if (interaction.isRoleSelectMenu() && (interaction.customId.startsWith('setup_') || interaction.customId === 'support_roles_select')) {
+    if (interaction.isRoleSelectMenu() && interaction.customId === 'setup_support_roles_select') {
         await handleSetupRoleSelect(interaction);
         return true;
     }
@@ -132,16 +132,16 @@ export async function handleSetupChannelSelect(interaction: ChannelSelectMenuInt
 
     try {
         switch (customId) {
-            case 'category_select':
+            case 'setup_category_select':
                 await handleCategorySelection(interaction, guildConfigDAO, selectedChannel as CategoryChannel, guildId);
                 break;
-            case 'panel_channel_select':
+            case 'setup_panel_channel_select':
                 await handlePanelChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
                 break;
-            case 'transcript_channel_select':
+            case 'setup_transcript_channel_select':
                 await handleTranscriptChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
                 break;
-            case 'error_log_channel_select':
+            case 'setup_error_log_channel_select':
                 await handleErrorLogChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
                 break;
         }
@@ -373,7 +373,7 @@ async function showErrorLogSetup(interaction: ButtonInteraction) {
         new ActionRowBuilder<ChannelSelectMenuBuilder>()
             .addComponents(
                 new ChannelSelectMenuBuilder()
-                    .setCustomId('error_log_channel_select')
+                    .setCustomId('setup_error_log_channel_select')
                     .setPlaceholder('Select a text channel...')
                     .addChannelTypes(ChannelType.GuildText)
                     .setMaxValues(1)

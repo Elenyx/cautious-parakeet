@@ -212,7 +212,7 @@ export async function showCategorySetup(interaction: ButtonInteraction) {
         new ActionRowBuilder<ChannelSelectMenuBuilder>()
             .addComponents(
                 new ChannelSelectMenuBuilder()
-                    .setCustomId('category_select')
+                    .setCustomId('setup_category_select')
                     .setPlaceholder('Select a category channel...')
                     .addChannelTypes(ChannelType.GuildCategory)
                     .setMaxValues(1)
@@ -249,7 +249,7 @@ export async function showPanelSetup(interaction: ButtonInteraction) {
         new ActionRowBuilder<ChannelSelectMenuBuilder>()
             .addComponents(
                 new ChannelSelectMenuBuilder()
-                    .setCustomId('panel_channel_select')
+                    .setCustomId('setup_panel_channel_select')
                     .setPlaceholder('Select a text channel...')
                     .addChannelTypes(ChannelType.GuildText)
                     .setMaxValues(1)
@@ -286,7 +286,7 @@ export async function showTranscriptSetup(interaction: ButtonInteraction) {
         new ActionRowBuilder<ChannelSelectMenuBuilder>()
             .addComponents(
                 new ChannelSelectMenuBuilder()
-                    .setCustomId('transcript_channel_select')
+                    .setCustomId('setup_transcript_channel_select')
                     .setPlaceholder('Select a text channel...')
                     .addChannelTypes(ChannelType.GuildText)
                     .setMaxValues(1)
@@ -323,7 +323,7 @@ export async function showSupportRolesSetup(interaction: ButtonInteraction) {
         new ActionRowBuilder<RoleSelectMenuBuilder>()
             .addComponents(
                 new RoleSelectMenuBuilder()
-                    .setCustomId('support_roles_select')
+                    .setCustomId('setup_support_roles_select')
                     .setPlaceholder('Select support roles...')
                     .setMaxValues(10) // Allow up to 10 support roles
                     .setMinValues(1)
