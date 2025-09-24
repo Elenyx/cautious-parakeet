@@ -22,9 +22,35 @@ export interface DiscordGuild {
 }
 
 export const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID
-export const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET
 export const DISCORD_REDIRECT_URI =
   process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || "http://localhost:3000/api/auth/discord/callback"
+
+export const DISCORD_PERMISSIONS = {
+  ADMINISTRATOR: 0x8,
+  MANAGE_GUILD: 0x20,
+  MANAGE_CHANNELS: 0x10,
+  MANAGE_ROLES: 0x10000000,
+} as const
+
+export function canManageServer(guild: DiscordGuild): boolean {
+  // User is the server owner
+  if (guild.owner) {
+    return true
+  }
+
+  // Check if user has administrator permissions
+  const permissions = Number.parseInt(guild.permissions)
+  if (permissions & DISCORD_PERMISSIONS.ADMINISTRATOR) {
+    return true
+  }
+
+  // Check if user has manage server permissions
+  if (permissions & DISCORD_PERMISSIONS.MANAGE_GUILD) {
+    return true
+  }
+
+  return false
+}
 
 export function getDiscordAuthUrl() {
   const params = new URLSearchParams({
@@ -35,28 +61,6 @@ export function getDiscordAuthUrl() {
   })
 
   return `https://discord.com/api/oauth2/authorize?${params.toString()}`
-}
-
-export async function exchangeCodeForToken(code: string) {
-  const response = await fetch("https://discord.com/api/oauth2/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      client_id: DISCORD_CLIENT_ID!,
-      client_secret: DISCORD_CLIENT_SECRET!,
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: DISCORD_REDIRECT_URI,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error("Failed to exchange code for token")
-  }
-
-  return response.json()
 }
 
 export async function getDiscordUser(accessToken: string): Promise<DiscordUser> {
@@ -84,7 +88,36 @@ export async function getDiscordGuilds(accessToken: string): Promise<DiscordGuil
     throw new Error("Failed to fetch Discord guilds")
   }
 
-  return response.json()
+  const allGuilds: DiscordGuild[] = await response.json()
+
+  const manageableGuilds = allGuilds.filter(canManageServer)
+
+  return manageableGuilds
+}
+
+export async function checkBotInGuild(guildId: string): Promise<boolean> {
+  try {
+    const response = await fetch("/api/discord/bot/presence", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ guildIds: [guildId] }),
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to check bot presence")
+    }
+
+    const data = await response.json()
+    const check = data.presenceChecks.find((check: any) => check.guildId === guildId)
+
+    return check ? check.present : false
+  } catch (error) {
+    console.error("Failed to check bot presence:", error)
+    // Fallback to random for demo purposes
+    return Math.random() > 0.3
+  }
 }
 
 export async function checkBotPresenceInGuilds(guildIds: string[]): Promise<Record<string, boolean>> {

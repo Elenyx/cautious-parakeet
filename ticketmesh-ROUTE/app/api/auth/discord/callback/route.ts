@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { exchangeCodeForToken, getDiscordUser, getDiscordGuilds, checkBotInGuild } from "@/lib/auth"
+import { exchangeCodeForToken } from "@/lib/server-auth"
+import { getDiscordUser, getDiscordGuilds, checkBotInGuild } from "@/lib/auth"
 import { cookies } from "next/headers"
 
 export async function GET(request: NextRequest) {

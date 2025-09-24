@@ -41,20 +41,26 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     /**
-     * JWT callback: attach Discord OAuth access_token to the JWT so it can be surfaced in the session.
+     * JWT callback: attach Discord OAuth access_token and user info to the JWT so it can be surfaced in the session.
      */
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token;
+      }
+      if (profile) {
+        token.id = profile.id;
       }
       return token;
     },
     /**
-     * Session callback: expose JWT's accessToken on the session object for server-side routes.
+     * Session callback: expose JWT's accessToken and user ID on the session object for server-side routes.
      */
     async session({ session, token }) {
       if (token.accessToken) {
         session.accessToken = token.accessToken as string;
+      }
+      if (token.id && session.user) {
+        session.user.id = token.id as string;
       }
       return session;
     },

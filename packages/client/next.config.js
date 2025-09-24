@@ -22,6 +22,9 @@ const nextConfig = {
     ],
   },
   
+  // Asset prefix for proper static file serving
+  assetPrefix: '',
+  
   // Disable x-powered-by header for security
   poweredByHeader: false,
   
@@ -38,6 +41,9 @@ const nextConfig = {
 
   // Silence workspace root inference warning by explicitly setting tracing root to monorepo root
   outputFileTracingRoot: path.join(__dirname, '../../'),
+  
+  // Ensure proper static file serving
+  trailingSlash: false,
 }
 
 module.exports = nextConfig

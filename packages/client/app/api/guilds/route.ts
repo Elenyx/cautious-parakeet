@@ -32,8 +32,9 @@ async function getGuildsHandler() {
     }
 
     // Fetch from Discord API with rate limiting and caching
+    // Only fetch guilds where user has MANAGE_GUILD permission (0x20)
     const guilds: DiscordGuild[] = await cachedDiscordFetch(
-      "https://discord.com/api/v10/users/@me/guilds",
+      "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
       {
         headers: {
           Authorization: `Bearer ${session.accessToken}`,
@@ -44,13 +45,24 @@ async function getGuildsHandler() {
       300 // Cache for 5 minutes
     )
 
+    // Filter guilds to only include those where user has MANAGE_GUILD permission (0x20) or is owner
+    const manageableGuilds = guilds.filter(guild => {
+      // Check if user is owner
+      if (guild.owner) return true
+      
+      // Check if user has MANAGE_GUILD permission (0x20)
+      const permissions = parseInt(guild.permissions || '0')
+      const MANAGE_GUILD = 0x20
+      return (permissions & MANAGE_GUILD) === MANAGE_GUILD
+    })
+
     // Check bot presence in each guild using the bot service
-    let guildsWithBotStatus = guilds
+    let guildsWithBotStatus = manageableGuilds
     try {
-      const guildIds = guilds.map(guild => guild.id)
+      const guildIds = manageableGuilds.map(guild => guild.id)
       
       // Use the bot service directly instead of the client proxy
-      const botServiceUrl = process.env.BOT_SERVICE_URL || 'http://localhost:3011'
+      const botServiceUrl = process.env.BOT_API_BASE_URL || 'http://localhost:3011'
       const presenceResponse = await fetch(`${botServiceUrl}/api/bot/presence`, {
         method: "POST",
         headers: {
@@ -63,12 +75,15 @@ async function getGuildsHandler() {
         const presenceData = await presenceResponse.json()
         const presenceMap: Record<string, boolean> = {}
         
-        presenceData.presenceChecks?.forEach((check: { guildId: string; present: boolean }) => {
-          presenceMap[check.guildId] = check.present
-        })
+        // Bot service returns direct array, not wrapped in presenceChecks
+        if (Array.isArray(presenceData)) {
+          presenceData.forEach((check: { guildId: string; present: boolean }) => {
+            presenceMap[check.guildId] = check.present
+          })
+        }
 
         // Add bot presence information to guilds
-        guildsWithBotStatus = guilds.map(guild => ({
+        guildsWithBotStatus = manageableGuilds.map(guild => ({
           ...guild,
           bot_present: presenceMap[guild.id] || false,
         }))

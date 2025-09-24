@@ -11,7 +11,6 @@ export async function GET() {
       return NextResponse.json({ guilds: [] }, { status: 401 })
     }
 
-    // Fetch fresh guild data
     const guilds = await getDiscordGuilds(tokenCookie.value)
 
     // Check bot presence in each guild
@@ -19,6 +18,7 @@ export async function GET() {
       guilds.map(async (guild) => ({
         ...guild,
         bot_present: await checkBotInGuild(guild.id),
+        permission_level: guild.owner ? "owner" : "admin",
       })),
     )
 

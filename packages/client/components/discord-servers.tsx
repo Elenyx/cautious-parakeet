@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import { Bot, Crown, ExternalLink } from "lucide-react"
+import { Bot, Crown, ExternalLink, RefreshCw } from "lucide-react"
 import { type DiscordGuild } from "@/lib/auth"
+import { signOut, signIn } from "next-auth/react"
 
 interface GuildWithTickets extends DiscordGuild {
   activeTickets?: number;
@@ -16,6 +17,8 @@ export function DiscordServers() {
   const [servers, setServers] = useState<GuildWithTickets[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthError, setIsAuthError] = useState(false);
+  const [reAuthenticating, setReAuthenticating] = useState(false);
 
   const generateBotInvite = async (guildId: string) => {
     try {
@@ -34,15 +37,31 @@ export function DiscordServers() {
     }
   };
 
+  const handleReAuthenticate = async () => {
+    setReAuthenticating(true);
+    try {
+      await signOut({ redirect: false });
+      await signIn("discord");
+    } catch (err) {
+      console.error('Re-authentication failed:', err);
+      setReAuthenticating(false);
+    }
+  };
+
   useEffect(() => {
     const fetchGuilds = async () => {
       try {
         const response = await fetch("/api/guilds");
         if (!response.ok) {
+          if (response.status === 401) {
+            setIsAuthError(true);
+            throw new Error("Authentication required - please re-authenticate with Discord");
+          }
           throw new Error("Failed to fetch guilds");
         }
         const data = await response.json();
         setServers(data);
+        setIsAuthError(false);
 
         // Fetch active tickets for each server
         const ticketPromises = data.map(async (server: GuildWithTickets) => {
@@ -76,8 +95,36 @@ export function DiscordServers() {
       <CardContent>
         <div className="space-y-4">
           {loading && <p>Loading servers...</p>}
-          {error && <p className="text-red-500">{error}</p>}
-          {servers.map((server) => (
+          {error && !isAuthError && <p className="text-red-500">{error}</p>}
+          {isAuthError && (
+            <div className="text-center p-6 border border-yellow-600/50 rounded-lg bg-yellow-600/10">
+              <div className="text-yellow-400 mb-2">
+                <RefreshCw className="w-8 h-8 mx-auto mb-2" />
+                <h3 className="font-semibold">Authentication Required</h3>
+              </div>
+              <p className="text-sm text-zinc-300 mb-4">
+                Your session needs to be refreshed. Please re-authenticate with Discord to continue.
+              </p>
+              <Button 
+                onClick={handleReAuthenticate}
+                disabled={reAuthenticating}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {reAuthenticating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Re-authenticating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Re-authenticate with Discord
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+          {!loading && !error && servers.map((server) => (
             <div key={server.id} className="flex items-center justify-between p-3 rounded-md hover:bg-zinc-700/50 border border-zinc-700/50">
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-zinc-700 rounded-full flex items-center justify-center mr-4 relative">
