@@ -1,12 +1,11 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-# Install build dependencies for native modules (better-sqlite3)
+# Install build dependencies for native modules
 RUN apk add --no-cache \
     python3 \
     make \
-    g++ \
-    sqlite-dev
+    g++
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -14,12 +13,11 @@ RUN npm install -g pnpm
 # Set working directory
 WORKDIR /app
 
-# Copy package files (bot package.json and local lockfile)
+# Copy package files
 COPY package.json ./
-COPY pnpm-lock.yaml ./
 
 # Install dependencies (including dev dependencies for building)
-RUN pnpm install --frozen-lockfile --prod=false
+RUN pnpm install --prod=false
 
 # Copy source code
 COPY . .
@@ -30,9 +28,6 @@ RUN pnpm run build
 # Production stage
 FROM node:20-alpine AS production
 
-# Install runtime dependencies only
-RUN apk add --no-cache sqlite
-
 # Install pnpm globally
 RUN npm install -g pnpm
 
@@ -41,16 +36,12 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json ./
-COPY pnpm-lock.yaml ./
 
 # Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod=true
+RUN pnpm install --prod=true
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
-
-# Create data directory for SQLite database
-RUN mkdir -p data
 
 # Expose port (if needed for health checks)
 EXPOSE 3001
