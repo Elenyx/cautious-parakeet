@@ -115,12 +115,12 @@ export async function showSetupWizard(interaction: ChatInputCommandInteraction |
                 new SectionBuilder()
                     .setButtonAccessory(
                         new ButtonBuilder()
-                            .setStyle(config?.transcript_channel_id ? ButtonStyle.Success : ButtonStyle.Primary)
-                            .setLabel(config?.transcript_channel_id ? "✅ Configured" : "Configure")
+                            .setStyle(config?.transcript_channel ? ButtonStyle.Success : ButtonStyle.Primary)
+.setLabel(config?.transcript_channel ? "✅ Configured" : "Configure")
                             .setCustomId("setup_transcript")
                     )
                     .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(`**📄 Transcript Channel** ${config?.transcript_channel_id ? `- <#${config.transcript_channel_id}>` : '- Not configured'}`),
+                        new TextDisplayBuilder().setContent(`**📄 Transcript Channel** ${config?.transcript_channel ? `- <#${config.transcript_channel}>` : '- Not configured'}`),
                         new TextDisplayBuilder().setContent("Set where ticket transcripts will be logged"),
                     ),
             )

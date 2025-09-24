@@ -459,10 +459,10 @@ export class TicketHandler {
 
             // Create transcript confirmation message
             let transcriptMessage = "";
-            if (transcriptGenerated && guildConfig?.transcript_channel_id) {
-                transcriptMessage = `✅ Transcript has been generated and saved in <#${guildConfig.transcript_channel_id}>`;
-            } else if (guildConfig?.transcript_channel_id) {
-                transcriptMessage = `⚠️ Transcript could not be generated, but would normally be saved in <#${guildConfig.transcript_channel_id}>`;
+            if (transcriptGenerated && guildConfig?.transcript_channel) {
+                transcriptMessage = `✅ Transcript has been generated and saved in <#${guildConfig.transcript_channel}>`;
+            } else if (guildConfig?.transcript_channel) {
+                transcriptMessage = `⚠️ Transcript could not be generated, but would normally be saved in <#${guildConfig.transcript_channel}>`;
             } else {
                 transcriptMessage = "⚠️ No transcript channel configured - transcript could not be saved";
             }

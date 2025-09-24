@@ -22,9 +22,7 @@ client.commands = new Collection();
 const loadCommands = async () => {
     // Check if we're in production by examining the current directory
     // If this file is running from dist/, we're in production
-    const currentDir = __dirname || process.cwd();
-    const isProduction = currentDir.includes('/dist') || currentDir.includes('\\dist') || 
-                        process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === 'production';
     
     const sourceDir = isProduction ? './dist' : './src';
     const fileExtension = isProduction ? 'js' : 'ts';

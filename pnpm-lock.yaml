@@ -13,9 +13,6 @@ importers:
       '@discordjs/rest':
         specifier: ^2.6.0
         version: 2.6.0
-      '@ticketmesh/types':
-        specifier: workspace:*
-        version: link:../types
       discord-api-types:
         specifier: ^0.38.26
         version: 0.38.26
@@ -239,12 +236,6 @@ importers:
         version: 1.3.3
       typescript:
         specifier: ^5
-        version: 5.8.3
-
-  packages/types:
-    devDependencies:
-      typescript:
-        specifier: ^5.0.4
         version: 5.8.3
 
 packages:

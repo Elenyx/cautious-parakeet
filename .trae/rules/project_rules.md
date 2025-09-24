@@ -1,3 +1,11 @@
+1. THIS IS A MONOREPO PROJECT.
+2. ALWAYS RUN TERMINAL WITH PATH:
+- /packages/bot
+- /packages/client
+3. DO NOT RUN SCRIPTS FROM ROOT DIRECTORY.
+4. STOP BUILDING FROM ROOT DIRECTORY.
+5. RESPECT SEPARATE DEPLOYMENT BETWEEN BOT AND CLIENT.
+
 # Display Components
 
 While you might be familiar with embeds in Discord, there are more ways to style and format your app messages using **display components**, a comprehensive set of layout and content elements.

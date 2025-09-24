@@ -103,7 +103,7 @@ async function handleConfigDebug(
         const configItems = [
             { name: 'Category ID', value: config.category_id, field: 'category_id' },
             { name: 'Panel Channel ID', value: config.panel_channel_id, field: 'panel_channel_id' },
-            { name: 'Transcript Channel ID', value: config.transcript_channel_id, field: 'transcript_channel_id' },
+            { name: 'Transcript Channel', value: config.transcript_channel, field: 'transcript_channel' },
             { name: 'Error Log Channel ID', value: config.error_log_channel_id, field: 'error_log_channel_id' }
         ];
         
@@ -135,7 +135,7 @@ async function handleConfigDebug(
         // Ticket counter
         embed.addFields({
             name: '🎫 Ticket Counter',
-            value: config.ticket_counter.toString(),
+            value: (config.ticket_counter || 0).toString(),
             inline: true
         });
     }
@@ -163,14 +163,14 @@ async function handleTranscriptDebug(
     // Check if transcript channel is configured
     const config = await guildConfigDAO.getGuildConfig(guildId);
     
-    if (!config || !config.transcript_channel_id) {
+    if (!config || !config.transcript_channel) {
         await interaction.editReply({
             content: '❌ **Transcript channel not configured!**\n\nUse `/setup transcript` to configure the transcript channel first.'
         });
         return;
     }
     
-    console.log(`[DEBUG] Transcript channel configured: ${config.transcript_channel_id}`);
+    console.log(`[DEBUG] Transcript channel configured: ${config.transcript_channel}`);
     
     try {
         // Test transcript generation
@@ -189,7 +189,7 @@ async function handleTranscriptDebug(
         await transcriptUtil.generateTranscript(ticketIdNumber);
         
         await interaction.editReply({
-            content: `✅ **Transcript generation initiated for ticket: ${ticketId}**\n\nCheck the transcript channel: <#${config.transcript_channel_id}>\nAlso check the console logs for detailed information.`
+            content: `✅ **Transcript generation initiated for ticket: ${ticketId}**\n\nCheck the transcript channel: <#${config.transcript_channel}>\nAlso check the console logs for detailed information.`
         });
         
     } catch (error) {

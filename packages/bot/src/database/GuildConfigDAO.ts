@@ -1,4 +1,4 @@
-import { GuildConfig } from '@ticketmesh/types';
+import { GuildConfig } from "../types";
 import { DatabaseManager } from './DatabaseManager';
 
 /**
@@ -8,7 +8,7 @@ interface PostgreSQLGuildConfigRow {
     guild_id: string;
     category_id?: string;
     panel_channel_id?: string;
-    transcript_channel_id?: string;
+    transcript_channel?: string;
     error_log_channel_id?: string;
     support_role_ids?: string; // JSON string
     ticket_counter: number;
@@ -66,7 +66,7 @@ export class GuildConfigDAO {
             
             const result = await this.dbManager.query(`
                 INSERT INTO guild_configs (
-                    guild_id, category_id, panel_channel_id, transcript_channel_id,
+                    guild_id, category_id, panel_channel_id, transcript_channel,
                     error_log_channel_id, support_role_ids, ticket_counter,
                     cleanup_enabled, cleanup_after_hours, auto_close_inactive,
                     inactive_hours
@@ -74,7 +74,7 @@ export class GuildConfigDAO {
                 ON CONFLICT(guild_id) DO UPDATE SET
                     category_id = COALESCE(EXCLUDED.category_id, guild_configs.category_id),
                     panel_channel_id = COALESCE(EXCLUDED.panel_channel_id, guild_configs.panel_channel_id),
-                    transcript_channel_id = COALESCE(EXCLUDED.transcript_channel_id, guild_configs.transcript_channel_id),
+                    transcript_channel = COALESCE(EXCLUDED.transcript_channel, guild_configs.transcript_channel),
                     error_log_channel_id = COALESCE(EXCLUDED.error_log_channel_id, guild_configs.error_log_channel_id),
                     support_role_ids = COALESCE(EXCLUDED.support_role_ids, guild_configs.support_role_ids),
                     ticket_counter = COALESCE(EXCLUDED.ticket_counter, guild_configs.ticket_counter),
@@ -88,7 +88,7 @@ export class GuildConfigDAO {
                 config.guild_id,
                 config.category_id || null,
                 config.panel_channel_id || null,
-                config.transcript_channel_id || null,
+                config.transcript_channel || null,
                 config.error_log_channel_id || null,
                 supportRoleIds,
                 config.ticket_counter || 0,
@@ -214,7 +214,7 @@ export class GuildConfigDAO {
             guild_id: row.guild_id,
             category_id: row.category_id,
             panel_channel_id: row.panel_channel_id,
-            transcript_channel_id: row.transcript_channel_id,
+            transcript_channel: row.transcript_channel,
             error_log_channel_id: row.error_log_channel_id,
             support_role_ids: row.support_role_ids ? JSON.parse(row.support_role_ids) : [],
             ticket_counter: row.ticket_counter,

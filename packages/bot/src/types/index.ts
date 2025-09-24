@@ -1,0 +1,41 @@
+export interface GuildConfig {
+    guild_id: string;
+    ticket_notification_channel?: string;
+    ticket_archive_channel?: string;
+    max_open_tickets?: number;
+    max_concurrent_tickets?: number;
+    ticket_close_reasons?: string[];
+    allow_ticket_close?: boolean;
+    allow_user_to_close_tickets?: boolean;
+    allow_user_to_reopen_tickets?: boolean;
+    ticket_categories?: {
+        id: string;
+        name: string;
+        description: string;
+    }[];
+    roles_that_can_open_tickets?: string[];
+    roles_that_can_manage_tickets?: string[];
+    ticket_naming_convention?: string;
+    transcripts_enabled?: boolean;
+    transcript_channel?: string;
+    detailed_transcripts?: boolean;
+    transcript_retention_days?: number;
+    feedback_enabled?: boolean;
+    feedback_channel?: string;
+    min_feedback_rating?: number;
+    max_feedback_rating?: number;
+    is_enabled?: boolean;
+    cleanup_tickets_days?: number;
+    cleanup_logs_days?: number;
+    category_id?: string;
+    panel_channel_id?: string;
+    error_log_channel_id?: string;
+    support_role_ids?: string[];
+    cleanup_enabled?: boolean;
+    ticket_counter?: number;
+    cleanup_after_hours?: number;
+    auto_close_inactive?: boolean;
+    inactive_hours?: number;
+    created_at?: string;
+    updated_at?: string;
+}

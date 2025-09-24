@@ -295,7 +295,7 @@ async function handleTranscriptSetup(
     }
 
     // Update configuration
-    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, transcript_channel_id: channel.id });
+    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, transcript_channel: channel.id });
 
     const embed = new EmbedBuilder()
         .setColor(0x00ff00)
@@ -583,10 +583,10 @@ async function handleViewConfig(
     }
 
     // Transcript Channel
-    if (config.transcript_channel_id) {
+    if (config.transcript_channel) {
         embed.addFields({
             name: '📄 Transcript Channel',
-            value: `<#${config.transcript_channel_id}>`,
+            value: `<#${config.transcript_channel}>`,
             inline: true
         });
     }
@@ -612,7 +612,7 @@ async function handleViewConfig(
     // Ticket Counter
     embed.addFields({
         name: '🎫 Ticket Counter',
-        value: config.ticket_counter.toString(),
+        value: (config.ticket_counter || 0).toString(),
         inline: true
     });
 

@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS guild_configs (
     guild_id VARCHAR(255) PRIMARY KEY,
     category_id VARCHAR(255),
     panel_channel_id VARCHAR(255),
-    transcript_channel_id VARCHAR(255),
+    transcript_channel VARCHAR(255),
     error_log_channel_id VARCHAR(255),
     support_role_ids TEXT, -- JSON array of role IDs
     ticket_counter INTEGER DEFAULT 0,

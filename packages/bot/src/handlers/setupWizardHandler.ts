@@ -276,7 +276,7 @@ async function handleTranscriptChannelSelection(
     }
 
     // Update configuration
-    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, transcript_channel_id: channel.id });
+    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, transcript_channel: channel.id });
 
     const embed = new EmbedBuilder()
         .setColor(0x00ff00)

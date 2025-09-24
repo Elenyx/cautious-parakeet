@@ -112,11 +112,11 @@ export class TranscriptUtil {
             // Get guild configuration
             console.log(`🔍 [TRANSCRIPT] Fetching guild config for guild: ${ticket.guild_id}`);
             const guildConfig = await this.guildConfigDAO.getGuildConfig(ticket.guild_id);
-            if (!guildConfig?.transcript_channel_id) {
+            if (!guildConfig?.transcript_channel) {
                 console.warn(`⚠️ [TRANSCRIPT] No transcript channel configured for guild ${ticket.guild_id}`);
                 return false;
             }
-            console.log(`✅ [TRANSCRIPT] Transcript channel configured: ${guildConfig.transcript_channel_id}`);
+            console.log(`✅ [TRANSCRIPT] Transcript channel configured: ${guildConfig.transcript_channel}`);
 
             // Fetch the ticket channel
             console.log(`🔍 [TRANSCRIPT] Fetching ticket channel: ${ticket.channel_id}`);
@@ -128,11 +128,11 @@ export class TranscriptUtil {
             console.log(`✅ [TRANSCRIPT] Ticket channel found: ${ticketChannel.name}`);
 
             // Fetch transcript channel
-            console.log(`🔍 [TRANSCRIPT] Fetching transcript channel: ${guildConfig.transcript_channel_id}`);
-            const transcriptChannel = await this.client.channels.fetch(guildConfig.transcript_channel_id) as TextChannel;
+            console.log(`🔍 [TRANSCRIPT] Fetching transcript channel: ${guildConfig.transcript_channel}`);
+            const transcriptChannel = await this.client.channels.fetch(guildConfig.transcript_channel) as TextChannel;
             if (!transcriptChannel) {
-                console.error(`❌ [TRANSCRIPT] Transcript channel ${guildConfig.transcript_channel_id} not found`);
-                throw new Error(`Transcript channel ${guildConfig.transcript_channel_id} not found`);
+                console.error(`❌ [TRANSCRIPT] Transcript channel ${guildConfig.transcript_channel} not found`);
+                throw new Error(`Transcript channel ${guildConfig.transcript_channel} not found`);
             }
             console.log(`✅ [TRANSCRIPT] Transcript channel found: ${transcriptChannel.name}`);
 
