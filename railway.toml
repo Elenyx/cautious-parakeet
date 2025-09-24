@@ -14,11 +14,14 @@ dockerfilePath = "Dockerfile"
 [services.deploy]
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+healthcheckPath = "/health"
+healthcheckTimeout = 300
 
 [services.variables]
 NODE_ENV = "production"
+PORT = "3001"
 
-# TicketMesh Client Service
+# TicketMesh Client Service  
 [[services]]
 name = "ticketmesh-client"
 
@@ -34,6 +37,9 @@ dockerfilePath = "Dockerfile"
 [services.deploy]
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
 
 [services.variables]
 NODE_ENV = "production"
+PORT = "3000"

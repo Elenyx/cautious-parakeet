@@ -7,6 +7,12 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+
+# Documentation files with sensitive data
+RAILWAY_DEPLOYMENT.md
+DISCORD_OAUTH2_VERIFICATION.md
+RAILWAY_VALIDATION_CHECKLIST.md
 
 # Build outputs
 dist/
