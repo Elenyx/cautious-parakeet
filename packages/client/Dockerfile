@@ -4,6 +4,9 @@ FROM node:20-alpine AS base
 # Install pnpm globally
 RUN npm install -g pnpm
 
+# Disable Next.js telemetry for build and runtime
+ENV NEXT_TELEMETRY_DISABLED=1
+
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
