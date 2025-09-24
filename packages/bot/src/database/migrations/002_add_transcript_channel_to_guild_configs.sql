@@ -1,0 +1,1 @@
+ALTER TABLE guild_configs ADD COLUMN transcript_channel VARCHAR(255);
