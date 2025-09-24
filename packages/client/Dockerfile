@@ -28,6 +28,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
+# Ensure public directory exists to prevent build failures
+RUN mkdir -p public
+
 # Build the application
 RUN pnpm run build
 
