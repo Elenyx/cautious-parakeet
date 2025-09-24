@@ -18,12 +18,14 @@
     "db:test-full": "tsx src/scripts/test-db.ts"
   },
   "dependencies": {
-        "@discordjs/rest": "^2.6.0",
+    "@discordjs/rest": "^2.6.0",
+    "@types/ioredis": "^5.0.0",
     "discord-api-types": "^0.38.26",
     "discord.js": "^14.14.1",
     "discraft": "^1.7.8",
     "dotenv": "^16.3.1",
     "glob": "^11.0.3",
+    "ioredis": "^5.8.0",
     "pg": "^8.16.3"
   },
   "devDependencies": {

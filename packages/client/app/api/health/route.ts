@@ -37,7 +37,7 @@ export async function GET() {
           timeout: 5000, // 5 second timeout
         })
         botServiceStatus = botHealthResponse.ok ? "healthy" : "unhealthy"
-      } catch (error) {
+      } catch (_error) {
         botServiceStatus = "unreachable"
       }
     }

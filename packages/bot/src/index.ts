@@ -7,6 +7,7 @@ import process from 'process';
 import { DatabaseManager } from "./database/DatabaseManager.js";
 import { TranscriptUtil } from "./utils/TranscriptUtil.js";
 import { ErrorLogger } from "./utils/ErrorLogger.js";
+import { DiscordApiService } from "./utils/DiscordApiService.js";
 
 config();
 
@@ -125,6 +126,10 @@ client.once(Events.ClientReady, async () => {
     TranscriptUtil.getInstance().setClient(client);
     ErrorLogger.getInstance().setClient(client);
     console.log("Utility classes initialized with Discord client");
+
+    // Initialize Discord API service for caching and rate limiting
+    DiscordApiService.initialize(client);
+    console.log("Discord API service initialized with caching and rate limiting");
 
     // Start internal HTTP server for dashboard data
     try {

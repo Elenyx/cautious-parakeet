@@ -2,6 +2,7 @@ import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { URL } from 'url';
 import { Client } from 'discord.js';
 import { TicketDAO } from '../database/TicketDAO';
+import { DiscordApiService } from '../utils/DiscordApiService';
 
 /**
  * Starts a lightweight HTTP server to expose dashboard data endpoints.
@@ -12,19 +13,23 @@ import { TicketDAO } from '../database/TicketDAO';
  * - GET /api/stats -> { activeTickets, connectedServers, resolvedToday, avgResponse }
  * - GET /api/activity -> Array feed of recent ticket events across guilds
  * - GET /api/guilds/:id -> { activeTickets } for a specific guild
+ * - POST /api/bot/presence -> { presenceChecks: [{ guildId, present }] }
  *
  * The server listens on PORT env var (Railway) or 3001 by default.
  */
 export async function startHttpServer(client: Client): Promise<void> {
   const ticketDAO = new TicketDAO();
   const port = Number(process.env.PORT) || 3001;
+  
+  // Initialize Discord API service with caching and rate limiting
+  const discordApiService = DiscordApiService.initialize(client);
 
   const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     try {
       console.log(`[HTTP] ${req.method} ${req.url} from ${req.socket.remoteAddress}:${req.socket.remotePort}`);
       // Basic CORS for local/dev tools; Next.js proxies server-side so this is minimal.
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
       if (req.method === 'OPTIONS') {
         res.writeHead(204);
@@ -34,6 +39,37 @@ export async function startHttpServer(client: Client): Promise<void> {
 
       const url = new URL(req.url || '/', `http://${req.headers.host}`);
       const pathname = url.pathname;
+      const method = req.method;
+
+      // Handle POST /api/bot/presence
+      if (req.method === 'POST' && pathname === '/api/bot/presence') {
+        const body = await readRequestBody(req);
+        try {
+          const { guildIds } = JSON.parse(body);
+          if (!Array.isArray(guildIds)) {
+            sendJSON(res, 400, { error: 'Invalid guildIds array' });
+            return;
+          }
+          const data = await discordApiService.checkBotPresence(guildIds);
+          sendJSON(res, 200, data);
+          return;
+        } catch (parseErr) {
+          sendJSON(res, 400, { error: 'Invalid JSON body' });
+          return;
+        }
+      }
+
+      // /api/metrics/cache/reset - Reset cache metrics (POST only)
+      if (pathname === '/api/metrics/cache/reset') {
+        if (method === 'POST') {
+          discordApiService.resetCacheMetrics();
+          sendJSON(res, 200, { message: 'Cache metrics reset successfully' });
+          return;
+        } else {
+          sendJSON(res, 405, { error: 'Method Not Allowed' });
+          return;
+        }
+      }
 
       if (req.method !== 'GET') {
         sendJSON(res, 405, { error: 'Method Not Allowed' });
@@ -77,6 +113,83 @@ export async function startHttpServer(client: Client): Promise<void> {
         }
         const openCount = await getGuildOpenTickets(ticketDAO, guildId);
         sendJSON(res, 200, { activeTickets: openCount });
+        return;
+      }
+
+      // /api/cached/guilds - Get cached guild data
+      if (pathname === '/api/cached/guilds') {
+        const data = await discordApiService.getCachedGuilds();
+        sendJSON(res, 200, data);
+        return;
+      }
+
+      // /api/cached/guilds/:id - Get cached guild details
+      if (pathname.startsWith('/api/cached/guilds/')) {
+        const parts = pathname.split('/').filter(Boolean);
+        const guildId = parts[3];
+        if (!guildId) {
+          sendJSON(res, 400, { error: 'Guild ID required' });
+          return;
+        }
+        const data = await discordApiService.getCachedGuildData(guildId);
+        if (!data) {
+          sendJSON(res, 404, { error: 'Guild not found in cache' });
+          return;
+        }
+        sendJSON(res, 200, data);
+        return;
+      }
+
+      // /api/cached/guilds/:id/members - Get cached guild members
+      if (pathname.startsWith('/api/cached/guilds/') && pathname.endsWith('/members')) {
+        const parts = pathname.split('/').filter(Boolean);
+        const guildId = parts[3];
+        if (!guildId) {
+          sendJSON(res, 400, { error: 'Guild ID required' });
+          return;
+        }
+        const data = await discordApiService.getCachedGuildMembers(guildId);
+        sendJSON(res, 200, data);
+        return;
+      }
+
+      // /api/cached/guilds/:id/channels - Get cached guild channels
+      if (pathname.startsWith('/api/cached/guilds/') && pathname.endsWith('/channels')) {
+        const parts = pathname.split('/').filter(Boolean);
+        const guildId = parts[3];
+        if (!guildId) {
+          sendJSON(res, 400, { error: 'Guild ID required' });
+          return;
+        }
+        const data = await discordApiService.getCachedGuildChannels(guildId);
+        sendJSON(res, 200, data);
+        return;
+      }
+
+      // /api/cached/guilds/:id/roles - Get cached guild roles
+      if (pathname.startsWith('/api/cached/guilds/') && pathname.endsWith('/roles')) {
+        const parts = pathname.split('/').filter(Boolean);
+        const guildId = parts[3];
+        if (!guildId) {
+          sendJSON(res, 400, { error: 'Guild ID required' });
+          return;
+        }
+        const data = await discordApiService.getCachedGuildRoles(guildId);
+        sendJSON(res, 200, data);
+        return;
+      }
+
+      // /api/metrics/task-queue - Get task queue statistics
+      if (pathname === '/api/metrics/task-queue') {
+        const data = discordApiService.getTaskQueueStats();
+        sendJSON(res, 200, data);
+        return;
+      }
+
+      // /api/metrics/cache - Get cache metrics (GET only)
+      if (pathname === '/api/metrics/cache' && method === 'GET') {
+        const data = discordApiService.getCacheMetrics();
+        sendJSON(res, 200, data);
         return;
       }
 
@@ -238,12 +351,31 @@ async function getRecentActivityFeed(client: Client, dao: TicketDAO, filterGuild
  * Formats a timestamp into a human-readable relative time (e.g., "5 minutes ago").
  */
 function formatRelative(thenMs: number, nowMs: number): string {
-  const diffSec = Math.max(1, Math.floor((nowMs - thenMs) / 1000));
-  if (diffSec < 60) return `${diffSec} seconds ago`;
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} minutes ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} hours ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay} days ago`;
+  const diffMs = nowMs - thenMs;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) return `${diffDays}d ago`;
+  if (diffHours > 0) return `${diffHours}h ago`;
+  if (diffMinutes > 0) return `${diffMinutes}m ago`;
+  return 'just now';
+}
+
+/**
+ * Reads the full request body from an IncomingMessage
+ */
+async function readRequestBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      resolve(body);
+    });
+    req.on('error', (err) => {
+      reject(err);
+    });
+  });
 }
