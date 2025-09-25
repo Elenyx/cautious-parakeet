@@ -32,8 +32,8 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       try {
         const [statsRes, guildsRes] = await Promise.all([
-          fetch('/api/stats'),
-          fetch('/api/guilds'),
+          fetch('/api/stats', { cache: 'no-store' }),
+          fetch('/api/guilds?fresh=1', { cache: 'no-store' }),
         ]);
 
         if (statsRes.ok) {
@@ -56,6 +56,8 @@ export default function DashboardPage() {
     };
 
     fetchStats();
+    const interval = setInterval(fetchStats, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
