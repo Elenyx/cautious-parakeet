@@ -35,7 +35,9 @@ async function getGuildsHandler(req: NextRequest) {
       const cachedGuilds = await redis.getCachedUserGuilds(userId)
       if (cachedGuilds) {
         console.log(`[Cache] Hit for user ${userId} guilds`)
-        return NextResponse.json(cachedGuilds)
+        return NextResponse.json(cachedGuilds, {
+          headers: { 'X-From-Cache': 'guilds' }
+        })
       }
     }
 
@@ -52,6 +54,14 @@ async function getGuildsHandler(req: NextRequest) {
         cache: "no-store",
       })
       if (!res.ok) {
+        // If fresh fetch fails, try to serve cached data
+        const stale = await redis.getCachedUserGuilds(userId)
+        if (stale) {
+          console.warn("/api/guilds fresh fetch failed - serving stale cached guilds")
+          return NextResponse.json(stale, {
+            headers: { 'X-From-Cache': 'stale' },
+          })
+        }
         return NextResponse.json({ error: "Failed to fetch guilds" }, { status: res.status })
       }
       guilds = await res.json()
@@ -101,8 +111,13 @@ async function getGuildsHandler(req: NextRequest) {
     try {
       const guildIds = manageableGuilds.map(guild => guild.id)
       
-      // Use authenticated bot API request
-      const presenceResponse = await botApiPost('/api/bot/presence', { guildIds })
+      // Use authenticated bot API request with timeout
+      const presenceResponse = await Promise.race([
+        botApiPost('/api/bot/presence', { guildIds }),
+        new Promise<Response>((_, reject) => 
+          setTimeout(() => reject(new Error('Bot presence check timeout')), 5000)
+        )
+      ])
 
       if (presenceResponse.ok) {
         const presenceData = await presenceResponse.json()
@@ -120,9 +135,12 @@ async function getGuildsHandler(req: NextRequest) {
           ...guild,
           bot_present: presenceMap[guild.id] || false,
         }))
+      } else {
+        console.warn(`Bot presence check failed with status ${presenceResponse.status}`)
       }
     } catch (presenceError) {
       console.warn("Failed to check bot presence, returning guilds without bot status:", presenceError)
+      // Keep the original guilds without bot status - this is acceptable
     }
 
     // Cache the final result with bot presence
