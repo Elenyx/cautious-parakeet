@@ -104,6 +104,9 @@ export async function handleSetupWizardButton(interaction: ButtonInteraction) {
         case 'back_to_wizard':
             await showSetupWizard(interaction);
             break;
+        case 'back_to_advanced':
+            await showAdvancedSetup(interaction);
+            break;
         default:
             await interaction.reply({
                 content: '❌ Unknown setup action.',
@@ -167,7 +170,7 @@ export async function handleSetupRoleSelect(interaction: RoleSelectMenuInteracti
         return;
     }
 
-    if (interaction.customId === 'support_roles_select') {
+    if (interaction.customId === 'setup_support_roles_select') {
         await handleSupportRolesSelection(interaction);
     }
 }
