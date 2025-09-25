@@ -16,8 +16,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Reuse our guilds API (which handles caching, permissions and presence)
-    const guildsRes = await fetch(`${process.env.NEXTAUTH_URL ?? ''}/api/guilds`, { cache: 'no-store' });
+    // Reuse our guilds API (which handles caching, permissions and presence).
+    // Use relative URL so cookies/session are forwarded automatically by Next.js.
+    const guildsRes = await fetch(`/api/guilds`, { cache: 'no-store' } as any);
     if (!guildsRes.ok) {
       const text = await guildsRes.text().catch(() => "");
       console.error(`/api/activity/owned guilds api error ${guildsRes.status}:`, text);
