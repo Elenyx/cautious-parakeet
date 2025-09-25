@@ -12,8 +12,20 @@ import { CalendarDays, GitCommit, Plus, Bug, Zap, Shield, Sparkles } from "lucid
 export default function ChangelogPage() {
   const changelogEntries = [
     {
+      version: "1.2.1",
+      date: "2025-09-25",
+      type: "patch" as const,
+      changes: [
+        { type: "improved", description: "Enhanced Discord API rate limiting with proper retry-after handling" },
+        { type: "improved", description: "Extended cache durations to reduce API call frequency (5x fewer requests)" },
+        { type: "added", description: "Request deduplication system to prevent duplicate API calls" },
+        { type: "fixed", description: "Rate limiter now respects Discord's actual retry timing instead of fixed timeouts" },
+        { type: "improved", description: "Significantly reduced Discord API rate limit errors and improved reliability" },
+      ]
+    },
+    {
       version: "1.2.0",
-      date: "2024-09-20",
+      date: "2025-09-20",
       type: "minor" as const,
       changes: [
         { type: "added", description: "Advanced ticket analytics and reporting dashboard" },
@@ -24,7 +36,7 @@ export default function ChangelogPage() {
     },
     {
       version: "1.1.0",
-      date: "2024-09-10",
+      date: "2025-09-10",
       type: "minor" as const,
       changes: [
         { type: "added", description: "Ticket templates for common support scenarios" },
@@ -35,7 +47,7 @@ export default function ChangelogPage() {
     },
     {
       version: "1.0.2",
-      date: "2024-09-05",
+      date: "2025-09-05",
       type: "patch" as const,
       changes: [
         { type: "fixed", description: "Critical bug in ticket assignment notifications" },
@@ -45,7 +57,7 @@ export default function ChangelogPage() {
     },
     {
       version: "1.0.1",
-      date: "2024-09-02",
+      date: "2025-09-02",
       type: "patch" as const,
       changes: [
         { type: "fixed", description: "Slash command registration failing on some servers" },
@@ -55,7 +67,7 @@ export default function ChangelogPage() {
     },
     {
       version: "1.0.0",
-      date: "2024-08-30",
+      date: "2025-08-30",
       type: "major" as const,
       changes: [
         { type: "added", description: "🎉 Initial public release of TicketMesh" },

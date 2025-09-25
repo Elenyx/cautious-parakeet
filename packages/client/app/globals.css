@@ -124,6 +124,76 @@
   }
 }
 
+/* Enhanced button hover states for better readability */
+@layer components {
+  .btn-outline-hover {
+    @apply transition-all duration-200;
+  }
+  
+  .btn-outline-hover:hover {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+  }
+  
+  .btn-outline-hover:hover svg {
+    color: white !important;
+  }
+  
+  .btn-outline-hover:hover span {
+    color: white !important;
+  }
+  
+  .btn-outline-hover:disabled {
+    @apply hover:bg-transparent hover:text-muted-foreground hover:border-border;
+  }
+  
+  .btn-outline-hover:disabled:hover {
+    color: var(--muted-foreground) !important;
+  }
+  
+  .btn-outline-hover:disabled:hover svg {
+    color: var(--muted-foreground) !important;
+  }
+  
+  /* Additional specificity for button components */
+  button.btn-outline-hover:hover {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+  }
+  
+  button.btn-outline-hover:hover * {
+    color: white !important;
+  }
+  
+  /* Ultra-specific selectors to override any existing styles */
+  [data-radix-collection-item].btn-outline-hover:hover,
+  .btn-outline-hover[data-state]:hover,
+  button[class*="btn-outline-hover"]:hover {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+  }
+  
+  [data-radix-collection-item].btn-outline-hover:hover *,
+  .btn-outline-hover[data-state]:hover *,
+  button[class*="btn-outline-hover"]:hover * {
+    color: white !important;
+  }
+  
+  /* Global fix for all outline buttons on status page */
+  .status-page button[data-variant="outline"]:hover {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+  }
+  
+  .status-page button[data-variant="outline"]:hover * {
+    color: white !important;
+  }
+}
+
 /* Custom grid pattern for background */
 .grid-pattern {
   background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),

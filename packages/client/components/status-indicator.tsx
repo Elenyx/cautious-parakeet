@@ -38,14 +38,29 @@ export function StatusIndicator({ service, className = "" }: StatusIndicatorProp
     return () => clearInterval(interval)
   }, [])
 
-  const getStatusColor = () => {
+  const getStatusConfig = () => {
     switch (status) {
       case "online":
-        return "bg-green-500"
+        return {
+          dotColor: "bg-green-500",
+          glowColor: "shadow-green-500/50",
+          textColor: "text-green-400",
+          pulse: "animate-pulse"
+        }
       case "offline":
-        return "bg-red-500"
+        return {
+          dotColor: "bg-red-500",
+          glowColor: "shadow-red-500/50",
+          textColor: "text-red-400",
+          pulse: ""
+        }
       case "loading":
-        return "bg-yellow-500 animate-pulse"
+        return {
+          dotColor: "bg-yellow-500",
+          glowColor: "shadow-yellow-500/50",
+          textColor: "text-yellow-400",
+          pulse: "animate-pulse"
+        }
     }
   }
 
@@ -60,13 +75,22 @@ export function StatusIndicator({ service, className = "" }: StatusIndicatorProp
     }
   }
 
+  const config = getStatusConfig()
+
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
-      <div className="flex items-center space-x-1">
-        <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
-        <span className="text-xs text-muted-foreground">{getStatusText()}</span>
+    <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full bg-muted/30 backdrop-blur-sm border border-border/50 transition-all duration-200 hover:bg-muted/50 ${className}`}>
+      <div className="flex items-center space-x-2">
+        <div className="relative">
+          <div className={`w-2.5 h-2.5 rounded-full ${config.dotColor} ${config.pulse}`} />
+          <div className={`absolute inset-0 w-2.5 h-2.5 rounded-full ${config.dotColor} opacity-30 ${config.pulse}`} />
+        </div>
+        <span className={`text-xs font-medium ${config.textColor}`}>{getStatusText()}</span>
       </div>
-      {status === "online" && <span className="text-xs text-muted-foreground">{ping}ms</span>}
+      {status === "online" && (
+        <span className="text-xs text-muted-foreground/80 font-mono">
+          {ping}ms
+        </span>
+      )}
     </div>
   )
 }

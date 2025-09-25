@@ -3,6 +3,103 @@ import { URL } from 'url';
 import { Client } from 'discord.js';
 import { TicketDAO } from '../database/TicketDAO';
 import { DiscordApiService } from '../utils/DiscordApiService';
+import { DatabaseManager } from '../database/DatabaseManager';
+
+/**
+ * Perform comprehensive health check for the bot service
+ * @param client - Discord client instance
+ * @returns Health check data
+ */
+async function performHealthCheck(client: Client): Promise<{
+  ok: boolean;
+  timestamp: string;
+  services: {
+    discord: {
+      status: 'connected' | 'disconnected';
+      guilds: number;
+      uptime: number;
+    };
+    database: {
+      status: 'connected' | 'disconnected';
+      responseTime: number;
+      error?: string;
+    };
+    bot: {
+      status: 'ready' | 'not_ready';
+      commands: number;
+      events: number;
+    };
+  };
+  uptime: number;
+  version: string;
+}> {
+  const startTime = Date.now();
+  
+  // Check Discord connection
+  const discordStatus = {
+    status: client.isReady() ? 'connected' : 'disconnected' as const,
+    guilds: client.guilds.cache.size,
+    uptime: client.uptime || 0
+  };
+
+  // Check database connection
+  let databaseStatus: {
+    status: 'connected' | 'disconnected';
+    responseTime: number;
+    error?: string;
+  } = {
+    status: 'disconnected',
+    responseTime: 0,
+    error: undefined
+  };
+
+  try {
+    const dbStartTime = Date.now();
+    const dbManager = DatabaseManager.getInstance();
+    await dbManager.query('SELECT 1 as health_check');
+    databaseStatus = {
+      status: 'connected',
+      responseTime: Date.now() - dbStartTime
+    };
+  } catch (error) {
+    databaseStatus = {
+      status: 'disconnected',
+      responseTime: 0,
+      error: error instanceof Error ? error.message : 'Unknown database error'
+    };
+  }
+
+  // Check bot readiness and command/event counts
+  const botStatus = {
+    status: client.isReady() ? 'ready' : 'not_ready' as const,
+    commands: client.commands?.size || 0,
+    events: client.eventNames().length
+  };
+
+  const overallHealth = discordStatus.status === 'connected' && 
+                       databaseStatus.status === 'connected' && 
+                       botStatus.status === 'ready';
+
+  return {
+    ok: overallHealth,
+    timestamp: new Date().toISOString(),
+    services: {
+      discord: {
+        status: discordStatus.status as 'connected' | 'disconnected',
+        guilds: discordStatus.guilds,
+        uptime: discordStatus.uptime
+      },
+      database: databaseStatus,
+      bot: {
+        status: botStatus.status as 'ready' | 'not_ready',
+        commands: botStatus.commands,
+        events: botStatus.events
+      }
+    },
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || '1.0.0'
+  };
+}
 
 /**
  * Authentication middleware to validate API_SECRET
@@ -72,8 +169,20 @@ export async function startHttpServer(client: Client): Promise<void> {
 
       // Public endpoints (no authentication required)
       if (pathname === '/health') {
-        sendJSON(res, 200, { ok: true });
-        return;
+        try {
+          // Perform comprehensive health check
+          const healthData = await performHealthCheck(client);
+          sendJSON(res, 200, healthData);
+          return;
+        } catch (error) {
+          console.error('Health check failed:', error);
+          sendJSON(res, 503, { 
+            ok: false, 
+            error: 'Health check failed',
+            timestamp: new Date().toISOString()
+          });
+          return;
+        }
       }
 
       // All other API endpoints require authentication
