@@ -30,15 +30,15 @@ async function getGuildsHandler(req: NextRequest) {
     const isFresh = freshParam === '1' ||
       (req.headers.get('cache-control')?.toLowerCase().includes('no-cache') ?? false)
 
-    // Check cache first (but with shorter TTL for real-time updates)
-    if (!isFresh) {
-      const cachedGuilds = await redis.getCachedUserGuilds(userId)
-      if (cachedGuilds) {
-        console.log(`[Cache] Hit for user ${userId} guilds`)
-        return NextResponse.json(cachedGuilds, {
-          headers: { 'X-From-Cache': 'guilds' }
-        })
-      }
+    // Always check cache first - even for fresh requests, we'll use cache as fallback
+    const cachedGuilds = await redis.getCachedUserGuilds(userId)
+    
+    // If not fresh and we have cached data, return it immediately
+    if (!isFresh && cachedGuilds) {
+      console.log(`[Cache] Hit for user ${userId} guilds`)
+      return NextResponse.json(cachedGuilds, {
+        headers: { 'X-From-Cache': 'guilds' }
+      })
     }
 
     // Fetch from Discord API with rate limiting and caching
@@ -55,10 +55,9 @@ async function getGuildsHandler(req: NextRequest) {
       })
       if (!res.ok) {
         // If fresh fetch fails, try to serve cached data
-        const stale = await redis.getCachedUserGuilds(userId)
-        if (stale) {
+        if (cachedGuilds) {
           console.warn("/api/guilds fresh fetch failed - serving stale cached guilds")
-          return NextResponse.json(stale, {
+          return NextResponse.json(cachedGuilds, {
             headers: { 'X-From-Cache': 'stale' },
           })
         }
@@ -80,10 +79,9 @@ async function getGuildsHandler(req: NextRequest) {
         ) as DiscordGuild[]
       } catch (e: unknown) {
         // If rate limited, try to serve stale cache if available
-        const stale = await redis.getCachedUserGuilds(userId)
-        if (stale) {
+        if (cachedGuilds) {
           console.warn("/api/guilds rate limited - serving stale cached guilds")
-          return NextResponse.json(stale, {
+          return NextResponse.json(cachedGuilds, {
             headers: { 'X-From-Cache': 'stale' },
           })
         }

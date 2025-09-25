@@ -78,11 +78,28 @@ export function DiscordServers() {
     try {
       if (!loading) setRefreshing(true);
       const response = await fetch(`/api/guilds${fresh ? '?fresh=1' : ''}`, { cache: fresh ? 'no-store' : 'default' });
+      
+      // Check if we got cached data (indicated by X-From-Cache header)
+      const fromCache = response.headers.get('X-From-Cache');
+      const isStale = fromCache === 'stale';
+      
       if (!response.ok) {
+        // If we have existing servers data, don't show error - just log it
+        if (servers.length > 0) {
+          console.warn("Failed to fetch fresh guilds, using existing data");
+          return;
+        }
         throw new Error("Failed to fetch guilds");
       }
+      
       const data = await response.json();
       setServers(data);
+      
+      // Clear any previous errors if we got data
+      if (data && data.length >= 0) {
+        setError(null);
+        console.log(`✅ Successfully loaded ${data.length} guilds`);
+      }
 
       // Fetch active tickets for each server
       const ticketPromises = data.map(async (server: GuildWithTickets) => {
@@ -100,15 +117,41 @@ export function DiscordServers() {
       setServers(serversWithTickets);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(message);
+      
+      // Only set error if we don't have any existing data
+      if (servers.length === 0) {
+        setError(message);
+        console.error("Guild fetch failed with no existing data:", message);
+      } else {
+        // If we have existing data, just log the error but don't show it to user
+        console.warn("Guild fetch error (using existing data):", message);
+        // Explicitly clear any previous error since we have data
+        setError(null);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [loading]);
+  }, [loading, servers]);
 
   useEffect(() => {
-    fetchGuilds();
+    // Initial load - try fresh first, then fallback to cached
+    const initialLoad = async () => {
+      try {
+        await fetchGuilds({ fresh: true });
+      } catch (err) {
+        // If fresh fails, try without fresh flag to get cached data
+        console.warn("Fresh load failed, trying cached data");
+        try {
+          await fetchGuilds({ fresh: false });
+        } catch (cachedErr) {
+          console.error("Both fresh and cached loads failed:", cachedErr);
+        }
+      }
+    };
+    
+    initialLoad();
+    
     // Start background polling every 20s for near real-time updates
     pollTimerRef.current = setInterval(() => {
       fetchGuilds({ fresh: true });

@@ -47,6 +47,9 @@ export default function DashboardPage() {
           const botActive = guilds.filter(g => g.bot_present).length;
           setOwnedCount(owned);
           setBotActiveCount(botActive);
+        } else {
+          // If guilds fetch fails, don't update counts but don't fail the entire stats fetch
+          console.warn('Failed to fetch guilds for stats, keeping existing counts');
         }
       } catch (err: unknown) {
         console.error('Error fetching stats/guilds:', err instanceof Error ? err.message : err);
