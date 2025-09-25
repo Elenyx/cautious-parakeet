@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions, type DiscordGuild } from "@/lib/auth"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { ClientRedisService } from "@/lib/redis"
 import { cachedDiscordFetch, createRateLimitedRoute } from "@/lib/rate-limit"
 import { botApiPost } from "@/lib/bot-api"
@@ -12,7 +12,7 @@ import { botApiPost } from "@/lib/bot-api"
  * - Includes bot presence checking for each guild.
  * - Implements caching and rate limiting to prevent Discord API issues.
  */
-async function getGuildsHandler() {
+async function getGuildsHandler(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     console.log("Session in /api/guilds:", session)
@@ -25,26 +25,49 @@ async function getGuildsHandler() {
     const redis = ClientRedisService.getInstance()
     const userId = session.user.id
 
+    // Support fresh fetch to bypass cache for real-time updates
+    const freshParam = req.nextUrl.searchParams.get('fresh')
+    const isFresh = freshParam === '1' ||
+      (req.headers.get('cache-control')?.toLowerCase().includes('no-cache') ?? false)
+
     // Check cache first
-    const cachedGuilds = await redis.getCachedUserGuilds(userId)
-    if (cachedGuilds) {
+    if (!isFresh) {
+      const cachedGuilds = await redis.getCachedUserGuilds(userId)
+      if (cachedGuilds) {
       console.log(`[Cache] Hit for user ${userId} guilds`)
-      return NextResponse.json(cachedGuilds)
+        return NextResponse.json(cachedGuilds)
+      }
     }
 
     // Fetch from Discord API with rate limiting and caching
     // Only fetch guilds where user has MANAGE_GUILD permission (0x20)
-    const guilds: DiscordGuild[] = await cachedDiscordFetch(
-      "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
-      {
+    let guilds: DiscordGuild[]
+    if (isFresh) {
+      // Bypass shared cache for real-time check
+      const res = await fetch("https://discord.com/api/v10/users/@me/guilds?with_counts=false", {
         headers: {
           Authorization: `Bearer ${session.accessToken}`,
           Accept: "application/json",
         },
-      },
-      `discord:guilds:${userId}`,
-      300 // Cache for 5 minutes
-    )
+        cache: "no-store",
+      })
+      if (!res.ok) {
+        return NextResponse.json({ error: "Failed to fetch guilds" }, { status: res.status })
+      }
+      guilds = await res.json()
+    } else {
+      guilds = await cachedDiscordFetch(
+        "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
+        {
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+            Accept: "application/json",
+          },
+        },
+        `discord:guilds:${userId}`,
+        300 // Cache for 5 minutes
+      ) as DiscordGuild[]
+    }
 
     // Filter guilds to only include those where user has MANAGE_GUILD permission (0x20) or is owner
     const manageableGuilds = guilds.filter(guild => {
@@ -87,7 +110,10 @@ async function getGuildsHandler() {
     }
 
     // Cache the final result with bot presence
-    await redis.cacheUserGuilds(userId, guildsWithBotStatus, 300) // Cache for 5 minutes
+    // Only cache when not explicitly fresh; otherwise keep result ephemeral
+    if (!isFresh) {
+      await redis.cacheUserGuilds(userId, guildsWithBotStatus, 300) // Cache for 5 minutes
+    }
 
     return NextResponse.json(guildsWithBotStatus)
   } catch (err: unknown) {
