@@ -62,7 +62,8 @@ export class GuildConfigDAO {
      */
     public async upsertGuildConfig(config: Partial<GuildConfig> & { guild_id: string }): Promise<GuildConfig> {
         try {
-            const supportRoleIds = JSON.stringify(config.support_role_ids || []);
+            // Handle support_role_ids specially - always update if provided, even if empty array
+            const supportRoleIds = config.support_role_ids !== undefined ? JSON.stringify(config.support_role_ids) : null;
             
             const result = await this.dbManager.query(`
                 INSERT INTO guild_configs (
@@ -76,7 +77,10 @@ export class GuildConfigDAO {
                     panel_channel_id = COALESCE(EXCLUDED.panel_channel_id, guild_configs.panel_channel_id),
                     transcript_channel = COALESCE(EXCLUDED.transcript_channel, guild_configs.transcript_channel),
                     error_log_channel_id = COALESCE(EXCLUDED.error_log_channel_id, guild_configs.error_log_channel_id),
-                    support_role_ids = COALESCE(EXCLUDED.support_role_ids, guild_configs.support_role_ids),
+                    support_role_ids = CASE 
+                        WHEN EXCLUDED.support_role_ids IS NOT NULL THEN EXCLUDED.support_role_ids 
+                        ELSE guild_configs.support_role_ids 
+                    END,
                     ticket_counter = COALESCE(EXCLUDED.ticket_counter, guild_configs.ticket_counter),
                     cleanup_enabled = COALESCE(EXCLUDED.cleanup_enabled, guild_configs.cleanup_enabled),
                     cleanup_after_hours = COALESCE(EXCLUDED.cleanup_after_hours, guild_configs.cleanup_after_hours),

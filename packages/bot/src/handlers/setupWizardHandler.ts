@@ -389,7 +389,17 @@ async function handleSupportRolesSelection(interaction: RoleSelectMenuInteractio
                 inline: false
             });
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        const components = [
+            new ActionRowBuilder<ButtonBuilder>()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('back_to_wizard')
+                        .setLabel('← Back to Setup')
+                        .setStyle(ButtonStyle.Secondary)
+                )
+        ];
+
+        await interaction.reply({ embeds: [embed], components: components, ephemeral: true });
     } catch (error) {
         console.error('Error in handleSupportRolesSelection:', error);
         if (!interaction.replied && !interaction.deferred) {
