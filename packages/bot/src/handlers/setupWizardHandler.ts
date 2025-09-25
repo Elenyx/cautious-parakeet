@@ -38,7 +38,7 @@ import {
  */
 export async function handleSetupWizardInteraction(interaction: ButtonInteraction | ChannelSelectMenuInteraction | RoleSelectMenuInteraction | ModalSubmitInteraction | StringSelectMenuInteraction): Promise<boolean> {
     // Check if this is a setup wizard interaction
-    if (interaction.isButton() && (interaction.customId.startsWith('setup_') || interaction.customId === 'back_to_wizard' || interaction.customId === 'deploy_panel')) {
+    if (interaction.isButton() && (interaction.customId.startsWith('setup_') || interaction.customId === 'back_to_wizard' || interaction.customId === 'back_to_advanced' || interaction.customId === 'deploy_panel')) {
         await handleSetupWizardButton(interaction);
         return true;
     }
@@ -133,27 +133,19 @@ export async function handleSetupChannelSelect(interaction: ChannelSelectMenuInt
     const selectedChannel = interaction.channels.first()!;
     const customId = interaction.customId;
 
-    try {
-        switch (customId) {
-            case 'setup_category_select':
-                await handleCategorySelection(interaction, guildConfigDAO, selectedChannel as CategoryChannel, guildId);
-                break;
-            case 'setup_panel_channel_select':
-                await handlePanelChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
-                break;
-            case 'setup_transcript_channel_select':
-                await handleTranscriptChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
-                break;
-            case 'setup_error_log_channel_select':
-                await handleErrorLogChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
-                break;
-        }
-    } catch (error) {
-        console.error('Error handling channel selection:', error);
-        await interaction.reply({
-            content: '❌ An error occurred while updating the configuration.',
-            ephemeral: true
-        });
+    switch (customId) {
+        case 'setup_category_select':
+            await handleCategorySelection(interaction, guildConfigDAO, selectedChannel as CategoryChannel, guildId);
+            break;
+        case 'setup_panel_channel_select':
+            await handlePanelChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
+            break;
+        case 'setup_transcript_channel_select':
+            await handleTranscriptChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
+            break;
+        case 'setup_error_log_channel_select':
+            await handleErrorLogChannelSelection(interaction, guildConfigDAO, selectedChannel as TextChannel, guildId);
+            break;
     }
 }
 
@@ -184,44 +176,54 @@ async function handleCategorySelection(
     category: CategoryChannel,
     guildId: string
 ) {
-    const permissionUtil = PermissionUtil.getInstance();
+    try {
+        const permissionUtil = PermissionUtil.getInstance();
 
-    // Validate category permissions
-    const validation = await permissionUtil.validateCategoryPermissions(category.id, interaction.guild!);
-    if (!validation.valid) {
+        // Validate category permissions
+        const validation = await permissionUtil.validateCategoryPermissions(category.id, interaction.guild!);
+        if (!validation.valid) {
+            const embed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle('❌ Category Validation Failed')
+                .setDescription('The selected category has permission issues:')
+                .addFields({
+                    name: 'Issues Found',
+                    value: validation.issues.map(issue => `• ${issue}`).join('\n'),
+                    inline: false
+                })
+                .addFields({
+                    name: 'Required Permissions',
+                    value: '• View Channel\n• Manage Channels\n• Manage Roles',
+                    inline: false
+                });
+
+            await interaction.reply({ embeds: [embed], ephemeral: true });
+            return;
+        }
+
+        // Update configuration
+        await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, category_id: category.id });
+
         const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle('❌ Category Validation Failed')
-            .setDescription('The selected category has permission issues:')
+            .setColor(0x00ff00)
+            .setTitle('✅ Category Configured')
+            .setDescription(`Ticket category has been set to ${category}`)
             .addFields({
-                name: 'Issues Found',
-                value: validation.issues.map(issue => `• ${issue}`).join('\n'),
-                inline: false
-            })
-            .addFields({
-                name: 'Required Permissions',
-                value: '• View Channel\n• Manage Channels\n• Manage Roles',
+                name: 'Category Info',
+                value: `**Name:** ${category.name}\n**ID:** ${category.id}\n**Channels:** ${category.children.cache.size}/50`,
                 inline: false
             });
 
         await interaction.reply({ embeds: [embed], ephemeral: true });
-        return;
+    } catch (error) {
+        console.error('Error in handleCategorySelection:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ An error occurred while configuring the category.',
+                ephemeral: true
+            });
+        }
     }
-
-    // Update configuration
-    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, category_id: category.id });
-
-    const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle('✅ Category Configured')
-        .setDescription(`Ticket category has been set to ${category}`)
-        .addFields({
-            name: 'Category Info',
-            value: `**Name:** ${category.name}\n**ID:** ${category.id}\n**Channels:** ${category.children.cache.size}/50`,
-            inline: false
-        });
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
 /**
@@ -233,30 +235,40 @@ async function handlePanelChannelSelection(
     channel: TextChannel,
     guildId: string
 ) {
-    // Check if bot can send messages in the channel
-    const botPermissions = channel.permissionsFor(interaction.guild!.members.me!);
-    if (!botPermissions?.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
-        await interaction.reply({
-            content: '❌ I don\'t have permission to send messages in that channel. Please ensure I have View Channel, Send Messages, and Embed Links permissions.',
-            ephemeral: true
-        });
-        return;
+    try {
+        // Check if bot can send messages in the channel
+        const botPermissions = channel.permissionsFor(interaction.guild!.members.me!);
+        if (!botPermissions?.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
+            await interaction.reply({
+                content: '❌ I don\'t have permission to send messages in that channel. Please ensure I have View Channel, Send Messages, and Embed Links permissions.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Update configuration
+        await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, panel_channel_id: channel.id });
+
+        const embed = new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle('✅ Panel Channel Configured')
+            .setDescription(`Ticket panel channel has been set to ${channel}`)
+            .addFields({
+                name: 'Next Steps',
+                value: 'Complete the category setup if not done, then deploy the panel!',
+                inline: false
+            });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    } catch (error) {
+        console.error('Error in handlePanelChannelSelection:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ An error occurred while configuring the panel channel.',
+                ephemeral: true
+            });
+        }
     }
-
-    // Update configuration
-    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, panel_channel_id: channel.id });
-
-    const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle('✅ Panel Channel Configured')
-        .setDescription(`Ticket panel channel has been set to ${channel}`)
-        .addFields({
-            name: 'Next Steps',
-            value: 'Complete the category setup if not done, then deploy the panel!',
-            inline: false
-        });
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
 /**
@@ -268,30 +280,40 @@ async function handleTranscriptChannelSelection(
     channel: TextChannel,
     guildId: string
 ) {
-    // Check if bot can send messages in the channel
-    const botPermissions = channel.permissionsFor(interaction.guild!.members.me!);
-    if (!botPermissions?.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
-        await interaction.reply({
-            content: '❌ I don\'t have permission to send messages in that channel. Please ensure I have View Channel, Send Messages, and Embed Links permissions.',
-            ephemeral: true
-        });
-        return;
+    try {
+        // Check if bot can send messages in the channel
+        const botPermissions = channel.permissionsFor(interaction.guild!.members.me!);
+        if (!botPermissions?.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
+            await interaction.reply({
+                content: '❌ I don\'t have permission to send messages in that channel. Please ensure I have View Channel, Send Messages, and Embed Links permissions.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Update configuration
+        await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, transcript_channel: channel.id });
+
+        const embed = new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle('✅ Transcript Channel Configured')
+            .setDescription(`Transcript channel has been set to ${channel}`)
+            .addFields({
+                name: 'Info',
+                value: 'Ticket transcripts will be logged here when tickets are closed.',
+                inline: false
+            });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    } catch (error) {
+        console.error('Error in handleTranscriptChannelSelection:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ An error occurred while configuring the transcript channel.',
+                ephemeral: true
+            });
+        }
     }
-
-    // Update configuration
-    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, transcript_channel: channel.id });
-
-    const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle('✅ Transcript Channel Configured')
-        .setDescription(`Transcript channel has been set to ${channel}`)
-        .addFields({
-            name: 'Info',
-            value: 'Ticket transcripts will be logged here when tickets are closed.',
-            inline: false
-        });
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
 /**
@@ -303,60 +325,80 @@ async function handleErrorLogChannelSelection(
     channel: TextChannel,
     guildId: string
 ) {
-    // Check if bot can send messages in the channel
-    const botPermissions = channel.permissionsFor(interaction.guild!.members.me!);
-    if (!botPermissions?.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
-        await interaction.reply({
-            content: '❌ I don\'t have permission to send messages in that channel. Please ensure I have View Channel, Send Messages, and Embed Links permissions.',
-            ephemeral: true
-        });
-        return;
+    try {
+        // Check if bot can send messages in the channel
+        const botPermissions = channel.permissionsFor(interaction.guild!.members.me!);
+        if (!botPermissions?.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
+            await interaction.reply({
+                content: '❌ I don\'t have permission to send messages in that channel. Please ensure I have View Channel, Send Messages, and Embed Links permissions.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Update configuration
+        await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, error_log_channel_id: channel.id });
+
+        const embed = new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle('✅ Error Log Channel Configured')
+            .setDescription(`Error log channel has been set to ${channel}`)
+            .addFields({
+                name: 'Info',
+                value: 'Bot errors and important events will be logged here.',
+                inline: false
+            });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    } catch (error) {
+        console.error('Error in handleErrorLogChannelSelection:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ An error occurred while configuring the error log channel.',
+                ephemeral: true
+            });
+        }
     }
-
-    // Update configuration
-    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, error_log_channel_id: channel.id });
-
-    const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle('✅ Error Log Channel Configured')
-        .setDescription(`Error log channel has been set to ${channel}`)
-        .addFields({
-            name: 'Info',
-            value: 'Bot errors and important events will be logged here.',
-            inline: false
-        });
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
 /**
  * Handle support roles selection
  */
 async function handleSupportRolesSelection(interaction: RoleSelectMenuInteraction) {
-    const guildConfigDAO = new GuildConfigDAO();
-    const guildId = interaction.guildId!;
-    const selectedRoles = interaction.roles;
+    try {
+        const guildConfigDAO = new GuildConfigDAO();
+        const guildId = interaction.guildId!;
+        const selectedRoles = interaction.roles;
 
-    // Update configuration with selected role IDs
-    const roleIds = selectedRoles.map(role => role.id);
-    await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, support_role_ids: roleIds });
+        // Update configuration with selected role IDs
+        const roleIds = selectedRoles.map(role => role.id);
+        await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, support_role_ids: roleIds });
 
-    const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle('✅ Support Roles Configured')
-        .setDescription('Support roles have been updated successfully!')
-        .addFields({
-            name: 'Selected Roles',
-            value: selectedRoles.map(role => `• ${role}`).join('\n'),
-            inline: false
-        })
-        .addFields({
-            name: 'Permissions',
-            value: 'These roles can now manage tickets and access ticket channels.',
-            inline: false
-        });
+        const embed = new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle('✅ Support Roles Configured')
+            .setDescription('Support roles have been updated successfully!')
+            .addFields({
+                name: 'Selected Roles',
+                value: selectedRoles.map(role => `• ${role}`).join('\n'),
+                inline: false
+            })
+            .addFields({
+                name: 'Permissions',
+                value: 'These roles can now manage tickets and access ticket channels.',
+                inline: false
+            });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    } catch (error) {
+        console.error('Error in handleSupportRolesSelection:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ An error occurred while configuring the support roles.',
+                ephemeral: true
+            });
+        }
+    }
 }
 
 /**
