@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { botApiGet } from "@/lib/bot-api";
+import { botApiGet, BotApiAuthError, BotApiConnectionError } from "@/lib/bot-api";
 
 /**
  * GET /api/activity/owned
@@ -39,15 +39,27 @@ export async function GET() {
     }
 
     const params = new URLSearchParams({ guildIds: ownedGuildIds.join(",") });
-    const res = await botApiGet(`/api/activity?${params.toString()}`, { cache: "no-store" });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error(`/api/activity/owned bot error ${res.status}:`, text);
-      return NextResponse.json({ error: "Failed to fetch activity" }, { status: res.status });
-    }
+    try {
+      const res = await botApiGet(`/api/activity?${params.toString()}`, { cache: "no-store" });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error(`/api/activity/owned bot error ${res.status}:`, text);
+        return NextResponse.json({ error: "Failed to fetch activity" }, { status: res.status });
+      }
 
-    const activity = await res.json();
-    return NextResponse.json(activity);
+      const activity = await res.json();
+      return NextResponse.json(activity);
+    } catch (botErr: unknown) {
+      if (botErr instanceof BotApiAuthError) {
+        console.warn("/api/activity/owned auth to bot failed:", botErr.message);
+        return NextResponse.json({ error: botErr.message }, { status: botErr.status || 401 });
+      }
+      if (botErr instanceof BotApiConnectionError) {
+        console.error("/api/activity/owned bot connection error:", botErr.message);
+        return NextResponse.json({ error: "Bot service unavailable" }, { status: 502 });
+      }
+      throw botErr;
+    }
   } catch (err: unknown) {
     console.error("/api/activity/owned unexpected error:", err);
     const message = err instanceof Error ? err.message : "Owned activity route error";
