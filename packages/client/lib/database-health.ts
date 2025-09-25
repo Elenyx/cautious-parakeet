@@ -25,9 +25,14 @@ export class DatabaseHealthChecker {
     
     try {
       const botApiUrl = process.env.BOT_API_BASE_URL || 'http://localhost:3001'
+      console.log(`[DatabaseHealth] Checking bot service at: ${botApiUrl}/health`)
+      
       const response = await fetch(`${botApiUrl}/health`, {
         method: 'GET',
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(10000), // Increased timeout
+        headers: {
+          'User-Agent': 'TicketMesh-Client/1.0'
+        }
       })
       
       const responseTime = Date.now() - startTime
@@ -66,6 +71,8 @@ export class DatabaseHealthChecker {
           }
         }
       } else {
+        const errorText = await response.text().catch(() => 'Unknown error')
+        console.error(`[DatabaseHealth] Bot service returned ${response.status}: ${errorText}`)
         return {
           status: 'unhealthy',
           responseTime,
@@ -77,12 +84,14 @@ export class DatabaseHealthChecker {
               idleCount: 0,
               waitingCount: 0
             },
-            error: `Bot service returned ${response.status}`
+            error: `Bot service returned ${response.status}: ${errorText}`
           }
         }
       }
     } catch (error) {
       const responseTime = Date.now() - startTime
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error(`[DatabaseHealth] Failed to check bot service: ${errorMessage}`)
       return {
         status: 'unhealthy',
         responseTime,
@@ -94,7 +103,7 @@ export class DatabaseHealthChecker {
             idleCount: 0,
             waitingCount: 0
           },
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: `Connection failed: ${errorMessage}`
         }
       }
     }

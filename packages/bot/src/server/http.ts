@@ -54,18 +54,23 @@ async function performHealthCheck(client: Client): Promise<{
   };
 
   try {
+    console.log('[Health] Testing database connection...');
     const dbStartTime = Date.now();
     const dbManager = DatabaseManager.getInstance();
     await dbManager.query('SELECT 1 as health_check');
+    const dbResponseTime = Date.now() - dbStartTime;
+    console.log(`[Health] Database connection successful (${dbResponseTime}ms)`);
     databaseStatus = {
       status: 'connected',
-      responseTime: Date.now() - dbStartTime
+      responseTime: dbResponseTime
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown database error';
+    console.error('[Health] Database connection failed:', errorMessage);
     databaseStatus = {
       status: 'disconnected',
       responseTime: 0,
-      error: error instanceof Error ? error.message : 'Unknown database error'
+      error: errorMessage
     };
   }
 
@@ -170,15 +175,18 @@ export async function startHttpServer(client: Client): Promise<void> {
       // Public endpoints (no authentication required)
       if (pathname === '/health') {
         try {
+          console.log('[Health] Performing health check...');
           // Perform comprehensive health check
           const healthData = await performHealthCheck(client);
+          console.log('[Health] Health check completed:', healthData.ok ? 'OK' : 'FAILED');
           sendJSON(res, 200, healthData);
           return;
         } catch (error) {
-          console.error('Health check failed:', error);
+          console.error('[Health] Health check failed:', error);
           sendJSON(res, 503, { 
             ok: false, 
             error: 'Health check failed',
+            details: error instanceof Error ? error.message : 'Unknown error',
             timestamp: new Date().toISOString()
           });
           return;

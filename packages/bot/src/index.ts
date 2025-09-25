@@ -192,8 +192,8 @@ client.once(Events.ClientReady, async () => {
 
 const init = async () => {
     try {
-        console.log('Initializing SQLite database...');
-        DatabaseManager.initialize();
+        console.log('Initializing PostgreSQL database...');
+        await DatabaseManager.initialize();
         console.log('Database initialized successfully!');
 
         console.log('Loading commands and events...');
