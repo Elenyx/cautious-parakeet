@@ -15,8 +15,8 @@ export class RateLimitMiddleware {
     try {
       const isLimited = await this.redis.isRateLimited(endpoint);
       if (isLimited) {
-        // Return a default retry after time since we can't access Redis TTL directly
-        return { limited: true, retryAfter: 60 };
+        // Return a shorter retry after time for better real-time experience
+        return { limited: true, retryAfter: 30 };
       }
       return { limited: false };
     } catch (error) {
@@ -56,7 +56,7 @@ export class RateLimitMiddleware {
           { 
             status: 429,
             headers: {
-              'Retry-After': rateLimitCheck.retryAfter?.toString() || '60'
+              'Retry-After': rateLimitCheck.retryAfter?.toString() || '30'
             }
           }
         );
@@ -68,7 +68,7 @@ export class RateLimitMiddleware {
         // Check if this is a Discord API rate limit error
         const errorObj = error as { status?: number; code?: number; retry_after?: number };
         if (errorObj.status === 429 || errorObj.code === 429) {
-          const retryAfter = errorObj.retry_after || 60;
+          const retryAfter = Math.min(errorObj.retry_after || 30, 60); // Cap at 60 seconds max
           await this.handleRateLimit(endpoint, retryAfter);
           
           return NextResponse.json(

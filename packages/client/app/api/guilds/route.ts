@@ -30,11 +30,11 @@ async function getGuildsHandler(req: NextRequest) {
     const isFresh = freshParam === '1' ||
       (req.headers.get('cache-control')?.toLowerCase().includes('no-cache') ?? false)
 
-    // Check cache first
+    // Check cache first (but with shorter TTL for real-time updates)
     if (!isFresh) {
       const cachedGuilds = await redis.getCachedUserGuilds(userId)
       if (cachedGuilds) {
-      console.log(`[Cache] Hit for user ${userId} guilds`)
+        console.log(`[Cache] Hit for user ${userId} guilds`)
         return NextResponse.json(cachedGuilds)
       }
     }
@@ -66,7 +66,7 @@ async function getGuildsHandler(req: NextRequest) {
             },
           },
           `discord:guilds:${userId}`,
-          300 // Cache for 5 minutes
+          60 // Cache for 1 minute for real-time updates
         ) as DiscordGuild[]
       } catch (e: unknown) {
         // If rate limited, try to serve stale cache if available
@@ -80,7 +80,7 @@ async function getGuildsHandler(req: NextRequest) {
         // Otherwise surface a 429 with Retry-After to the client
         return NextResponse.json(
           { error: "Discord rate limited. Please retry shortly." },
-          { status: 429, headers: { 'Retry-After': '60' } }
+          { status: 429, headers: { 'Retry-After': '30' } }
         )
       }
     }
@@ -128,7 +128,7 @@ async function getGuildsHandler(req: NextRequest) {
     // Cache the final result with bot presence
     // Only cache when not explicitly fresh; otherwise keep result ephemeral
     if (!isFresh) {
-      await redis.cacheUserGuilds(userId, guildsWithBotStatus, 300) // Cache for 5 minutes
+      await redis.cacheUserGuilds(userId, guildsWithBotStatus, 60) // Cache for 1 minute for real-time updates
     }
 
     return NextResponse.json(guildsWithBotStatus)
