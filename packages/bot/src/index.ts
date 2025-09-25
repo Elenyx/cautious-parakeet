@@ -11,6 +11,42 @@ import { DiscordApiService } from "./utils/DiscordApiService.js";
 
 config();
 
+/**
+ * Validate required environment variables
+ */
+function validateEnvironment() {
+    const requiredVars = ['DISCORD_TOKEN'];
+    const optionalVars = ['API_SECRET', 'PORT', 'NODE_ENV'];
+    
+    const missingRequired = requiredVars.filter(varName => !process.env[varName]);
+    
+    if (missingRequired.length > 0) {
+        console.error('[ENV] Missing required environment variables:', missingRequired);
+        process.exit(1);
+    }
+    
+    // Check API_SECRET configuration
+    if (!process.env.API_SECRET) {
+        console.warn('[ENV] API_SECRET not configured - HTTP server will accept unauthenticated requests');
+        console.warn('[ENV] This is a security risk in production environments');
+    } else {
+        console.log('[ENV] API_SECRET configured - HTTP server will require authentication');
+    }
+    
+    // Log other environment variables
+    optionalVars.forEach(varName => {
+        const value = process.env[varName];
+        if (value) {
+            console.log(`[ENV] ${varName}=${varName === 'API_SECRET' ? '[REDACTED]' : value}`);
+        }
+    });
+    
+    console.log('[ENV] Environment validation completed');
+}
+
+// Validate environment before initializing client
+validateEnvironment();
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,

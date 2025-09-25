@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { botApiGet } from "@/lib/bot-api";
 
 /**
  * GET /api/guilds/[id]
@@ -21,18 +22,13 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const base = process.env.BOT_API_BASE_URL;
-  if (!base) {
-    return NextResponse.json({ error: "BOT_API_BASE_URL not configured" }, { status: 500 });
-  }
-
   const { id } = await context.params;
   if (!id) {
     return NextResponse.json({ error: "Guild ID required" }, { status: 400 });
   }
 
   try {
-    const res = await fetch(`${base}/api/guilds/${id}`, { cache: "no-store" });
+    const res = await botApiGet(`/api/guilds/${id}`, { cache: "no-store" });
     if (!res.ok) {
       return NextResponse.json({ error: "Failed to fetch guild info" }, { status: res.status });
     }

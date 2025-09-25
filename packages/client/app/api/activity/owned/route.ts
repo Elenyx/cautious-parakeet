@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { botApiGet } from "@/lib/bot-api";
 
 /**
  * GET /api/activity/owned
@@ -33,18 +34,13 @@ export async function GET() {
     const guilds: Array<{ id: string; owner: boolean }> = await guildsRes.json();
     const ownedGuildIds = guilds.filter(g => g.owner).map(g => g.id);
 
-    const base = process.env.BOT_API_BASE_URL;
-    if (!base) {
-      return NextResponse.json({ error: "BOT_API_BASE_URL not configured" }, { status: 500 });
-    }
-
     // If user owns no guilds, return empty activity list
     if (ownedGuildIds.length === 0) {
       return NextResponse.json([]);
     }
 
     const params = new URLSearchParams({ guildIds: ownedGuildIds.join(",") });
-    const res = await fetch(`${base}/api/activity?${params.toString()}`, { cache: "no-store" });
+    const res = await botApiGet(`/api/activity?${params.toString()}`, { cache: "no-store" });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error(`/api/activity/owned bot error ${res.status}:`, text);

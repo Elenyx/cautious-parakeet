@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { botApiPost } from "@/lib/bot-api"
 
 /**
  * Check bot presence in multiple Discord guilds
@@ -15,25 +16,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const BOT_API_BASE_URL = process.env.BOT_API_BASE_URL
-    if (!BOT_API_BASE_URL) {
-      console.error("BOT_API_BASE_URL not configured")
-      // Return fallback data for development
-      const presenceChecks = guildIds.map(guildId => ({
-        guildId,
-        present: Math.random() > 0.3 // Random fallback for demo
-      }))
-      return NextResponse.json({ presenceChecks })
-    }
-
-    // Check bot presence via bot API
-    const response = await fetch(`${BOT_API_BASE_URL}/api/bot/presence`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ guildIds }),
-    })
+    // Check bot presence via authenticated bot API
+    const response = await botApiPost('/api/bot/presence', { guildIds })
 
     if (!response.ok) {
       throw new Error(`Bot API responded with status: ${response.status}`)

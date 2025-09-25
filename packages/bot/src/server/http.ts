@@ -5,6 +5,35 @@ import { TicketDAO } from '../database/TicketDAO';
 import { DiscordApiService } from '../utils/DiscordApiService';
 
 /**
+ * Authentication middleware to validate API_SECRET
+ * @param req - Incoming HTTP request
+ * @returns true if authenticated, false otherwise
+ */
+function isAuthenticated(req: IncomingMessage): boolean {
+  const apiSecret = process.env.API_SECRET;
+  
+  // If API_SECRET is not configured, log warning but allow access for backward compatibility
+  if (!apiSecret) {
+    console.warn('[AUTH] API_SECRET not configured - authentication disabled');
+    return true;
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return false;
+  }
+
+  // Support both "Bearer <token>" and "ApiKey <token>" formats
+  const token = authHeader.startsWith('Bearer ') 
+    ? authHeader.slice(7)
+    : authHeader.startsWith('ApiKey ')
+    ? authHeader.slice(7)
+    : authHeader;
+
+  return token === apiSecret;
+}
+
+/**
  * Starts a lightweight HTTP server to expose dashboard data endpoints.
  * This avoids adding external server dependencies and serves JSON for the client app to consume.
  *
@@ -30,7 +59,7 @@ export async function startHttpServer(client: Client): Promise<void> {
       // Basic CORS for local/dev tools; Next.js proxies server-side so this is minimal.
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       if (req.method === 'OPTIONS') {
         res.writeHead(204);
         res.end();
@@ -40,6 +69,21 @@ export async function startHttpServer(client: Client): Promise<void> {
       const url = new URL(req.url || '/', `http://${req.headers.host}`);
       const pathname = url.pathname;
       const method = req.method;
+
+      // Public endpoints (no authentication required)
+      if (pathname === '/health') {
+        sendJSON(res, 200, { ok: true });
+        return;
+      }
+
+      // All other API endpoints require authentication
+      if (pathname.startsWith('/api/')) {
+        if (!isAuthenticated(req)) {
+          console.warn(`[AUTH] Unauthorized access attempt to ${pathname} from ${req.socket.remoteAddress}`);
+          sendJSON(res, 401, { error: 'Unauthorized - Invalid or missing API key' });
+          return;
+        }
+      }
 
       // Handle POST /api/bot/presence
       if (req.method === 'POST' && pathname === '/api/bot/presence') {
@@ -73,11 +117,6 @@ export async function startHttpServer(client: Client): Promise<void> {
 
       if (req.method !== 'GET') {
         sendJSON(res, 405, { error: 'Method Not Allowed' });
-        return;
-      }
-
-      if (pathname === '/health') {
-        sendJSON(res, 200, { ok: true });
         return;
       }
 

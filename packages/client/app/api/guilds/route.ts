@@ -3,6 +3,7 @@ import { authOptions, type DiscordGuild } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import { ClientRedisService } from "@/lib/redis"
 import { cachedDiscordFetch, createRateLimitedRoute } from "@/lib/rate-limit"
+import { botApiPost } from "@/lib/bot-api"
 
 /**
  * Fetches the guilds (servers) of the authenticated user from the Discord API.
@@ -61,15 +62,8 @@ async function getGuildsHandler() {
     try {
       const guildIds = manageableGuilds.map(guild => guild.id)
       
-      // Use the bot service directly instead of the client proxy
-      const botServiceUrl = process.env.BOT_API_BASE_URL || 'http://localhost:3011'
-      const presenceResponse = await fetch(`${botServiceUrl}/api/bot/presence`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ guildIds }),
-      })
+      // Use authenticated bot API request
+      const presenceResponse = await botApiPost('/api/bot/presence', { guildIds })
 
       if (presenceResponse.ok) {
         const presenceData = await presenceResponse.json()

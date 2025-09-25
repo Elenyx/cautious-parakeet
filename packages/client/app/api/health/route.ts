@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { botApiHealth } from "@/lib/bot-api"
 
 /**
  * Health check endpoint for Railway deployment
@@ -12,6 +13,11 @@ export async function GET() {
       'DISCORD_CLIENT_SECRET', 
       'NEXTAUTH_SECRET',
       'NEXTAUTH_URL'
+    ]
+    
+    const optionalEnvVars = [
+      'API_SECRET',
+      'BOT_API_BASE_URL'
     ]
 
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName])
@@ -32,10 +38,7 @@ export async function GET() {
     let botServiceStatus = "unknown"
     if (process.env.BOT_API_BASE_URL) {
       try {
-        const botHealthResponse = await fetch(`${process.env.BOT_API_BASE_URL}/health`, {
-          method: 'GET',
-          timeout: 5000, // 5 second timeout
-        })
+        const botHealthResponse = await botApiHealth()
         botServiceStatus = botHealthResponse.ok ? "healthy" : "unhealthy"
       } catch (_error) {
         botServiceStatus = "unreachable"
@@ -55,6 +58,9 @@ export async function GET() {
       discord: {
         clientId: process.env.DISCORD_CLIENT_ID ? "configured" : "missing",
         authUrl: process.env.NEXTAUTH_URL || "not configured"
+      },
+      security: {
+        apiSecret: process.env.API_SECRET ? "configured" : "missing - unauthenticated requests to bot service"
       }
     })
   } catch (error) {

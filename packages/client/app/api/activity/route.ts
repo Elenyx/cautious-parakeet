@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
 import { NextResponse } from "next/server";
+import { botApiGet } from "../../../lib/bot-api";
 
 /**
  * GET /api/activity
@@ -13,13 +14,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const base = process.env.BOT_API_BASE_URL;
-  if (!base) {
-    return NextResponse.json({ error: "BOT_API_BASE_URL not configured" }, { status: 500 });
-  }
-
   try {
-    const res = await fetch(`${base}/api/activity`, { cache: "no-store" });
+    const res = await botApiGet('/api/activity', { cache: "no-store" });
     if (!res.ok) {
       return NextResponse.json({ error: "Failed to fetch activity" }, { status: res.status });
     }
