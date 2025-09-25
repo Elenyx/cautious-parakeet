@@ -20,6 +20,8 @@ healthcheckTimeout = 300
 [services.variables]
 NODE_ENV = "production"
 PORT = "3001"
+# Use Railway public proxy for Redis to avoid internal DNS resolution issues
+REDIS_URL = "redis://default:uSJmhvtfgYyWUMrFrSGrcuUAVXQfkpvD@metro.proxy.rlwy.net:54279"
 # IMPORTANT: Set these environment variables in Railway Dashboard:
 # DISCORD_TOKEN = "your_discord_bot_token"
 # DISCORD_CLIENT_ID = "your_discord_client_id"
@@ -50,6 +52,8 @@ healthcheckTimeout = 300
 NODE_ENV = "production"
 PORT = "3000"
 BOT_API_BASE_URL = "https://ticketmesh-bot-production.up.railway.app"
+# Use Railway public proxy for Redis to avoid internal DNS resolution issues
+REDIS_URL = "redis://default:uSJmhvtfgYyWUMrFrSGrcuUAVXQfkpvD@metro.proxy.rlwy.net:54279"
 # IMPORTANT: Set these environment variables in Railway Dashboard:
 # API_SECRET = "your_api_secret_key" # Must match bot service API_SECRET
 # NextAuth Configuration - SET THESE IN RAILWAY DASHBOARD
