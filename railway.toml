@@ -50,6 +50,8 @@ healthcheckTimeout = 300
 NODE_ENV = "production"
 PORT = "3000"
 BOT_API_BASE_URL = "https://ticketmesh-bot-production.up.railway.app"
+# IMPORTANT: Set these environment variables in Railway Dashboard:
+# API_SECRET = "your_api_secret_key" # Must match bot service API_SECRET
 # NextAuth Configuration - SET THESE IN RAILWAY DASHBOARD
 # NEXTAUTH_SECRET = "${{NEXTAUTH_SECRET}}"
 # NEXTAUTH_URL = "https://ticketmesh-production.up.railway.app"

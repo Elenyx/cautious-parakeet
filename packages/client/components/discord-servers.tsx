@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Bot, Crown, ExternalLink, RefreshCw } from "lucide-react"
 import { type DiscordGuild } from "@/lib/auth"
 import { signOut, signIn } from "next-auth/react"
@@ -17,6 +17,8 @@ export function DiscordServers() {
   const [servers, setServers] = useState<GuildWithTickets[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const pollTimerRef = useRef<NodeJS.Timer | null>(null);
 
   const generateBotInvite = async (guildId: string) => {
     try {
@@ -29,50 +31,102 @@ export function DiscordServers() {
       if (response.ok) {
         const { inviteUrl } = await response.json();
         window.open(inviteUrl, '_blank');
+
+        // Short-lived polling to detect bot joining the guild after invite
+        try {
+          let attempts = 0;
+          const maxAttempts = 12; // ~1 minute
+          const intervalMs = 5000;
+
+          const poll = async () => {
+            attempts += 1;
+            try {
+              const presenceRes = await fetch('/api/discord/bot/presence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guildIds: [guildId] }),
+              });
+              if (presenceRes.ok) {
+                const data = await presenceRes.json();
+                const checks = Array.isArray(data) ? data : data.presenceChecks;
+                const found = Array.isArray(checks) ? checks.find((c: any) => c.guildId === guildId) : null;
+                const present = Boolean(found?.present);
+                if (present) {
+                  setServers(prev => prev.map(s => s.id === guildId ? { ...s, bot_present: true } : s));
+                  return true;
+                }
+              }
+            } catch {}
+            return false;
+          };
+
+          const interval = setInterval(async () => {
+            const done = await poll();
+            if (done || attempts >= maxAttempts) {
+              clearInterval(interval);
+            }
+          }, intervalMs);
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to generate bot invite:', err);
     }
   };
 
-  useEffect(() => {
-    const fetchGuilds = async () => {
-      try {
-        const response = await fetch("/api/guilds");
-        if (!response.ok) {
-          throw new Error("Failed to fetch guilds");
-        }
-        const data = await response.json();
-        setServers(data);
+  const fetchGuilds = useCallback(async (options?: { fresh?: boolean }) => {
+    const fresh = options?.fresh ?? false;
+    try {
+      if (!loading) setRefreshing(true);
+      const response = await fetch(`/api/guilds${fresh ? '?fresh=1' : ''}`, { cache: fresh ? 'no-store' : 'default' });
+      if (!response.ok) {
+        throw new Error("Failed to fetch guilds");
+      }
+      const data = await response.json();
+      setServers(data);
 
-        // Fetch active tickets for each server
-        const ticketPromises = data.map(async (server: GuildWithTickets) => {
-          const ticketResponse = await fetch(`/api/guilds/${server.id}`);
+      // Fetch active tickets for each server
+      const ticketPromises = data.map(async (server: GuildWithTickets) => {
+        try {
+          const ticketResponse = await fetch(`/api/guilds/${server.id}`, { cache: 'no-store' });
           if (ticketResponse.ok) {
             const ticketData = await ticketResponse.json();
             return { ...server, activeTickets: ticketData.activeTickets };
           }
-          return server;
-        });
+        } catch {}
+        return server;
+      });
 
-        const serversWithTickets = await Promise.all(ticketPromises);
-        setServers(serversWithTickets);
+      const serversWithTickets = await Promise.all(ticketPromises);
+      setServers(serversWithTickets);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [loading]);
 
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchGuilds();
-  }, []);
+    // Start background polling every 20s for near real-time updates
+    pollTimerRef.current = setInterval(() => {
+      fetchGuilds({ fresh: true });
+    }, 20000);
+
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    };
+  }, [fetchGuilds]);
 
   return (
     <Card className="bg-zinc-800 border-zinc-700">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-white">Your Discord Servers</CardTitle>
+        <Button variant="outline" size="sm" className="border-zinc-600 hover:bg-zinc-700" onClick={() => fetchGuilds({ fresh: true })} disabled={refreshing}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing' : 'Refresh'}
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
