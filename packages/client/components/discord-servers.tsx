@@ -20,6 +20,7 @@ export function DiscordServers() {
   const [refreshing, setRefreshing] = useState(false);
   const pollTimerRef = useRef<NodeJS.Timer | null>(null);
   const pendingRequestsRef = useRef<Set<string>>(new Set());
+  const serversRef = useRef<GuildWithTickets[]>([]);
 
   const generateBotInvite = async (guildId: string) => {
     try {
@@ -95,16 +96,18 @@ export function DiscordServers() {
       const isStale = fromCache === 'stale';
       
       if (!response.ok) {
-        // If we have existing servers data, don't show error - just log it
-        if (servers.length > 0) {
+        // Check if we have existing servers data - if so, don't show error
+        if (serversRef.current.length > 0) {
           console.warn("Failed to fetch fresh guilds, using existing data");
           return;
+        } else {
+          throw new Error("Failed to fetch guilds");
         }
-        throw new Error("Failed to fetch guilds");
       }
       
       const data = await response.json();
       setServers(data);
+      serversRef.current = data;
       
       // Clear any previous errors if we got data
       if (data && data.length >= 0) {
@@ -137,11 +140,12 @@ export function DiscordServers() {
 
       const serversWithTickets = await Promise.all(ticketPromises);
       setServers(serversWithTickets);
+      serversRef.current = serversWithTickets;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
       
       // Only set error if we don't have any existing data
-      if (servers.length === 0) {
+      if (serversRef.current.length === 0) {
         setError(message);
         console.error("Guild fetch failed with no existing data:", message);
       } else {
@@ -155,7 +159,7 @@ export function DiscordServers() {
       setRefreshing(false);
       pendingRequestsRef.current.delete(requestKey);
     }
-  }, [loading, servers]);
+  }, [loading]);
 
   useEffect(() => {
     // Initial load - try fresh first, then fallback to cached
@@ -200,8 +204,16 @@ export function DiscordServers() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {loading && <p>Loading servers...</p>}
-          {error && <p className="text-red-500">{error}</p>}
+          {loading && <p className="text-zinc-400">Loading servers...</p>}
+          {error && (
+            <div className="text-red-400 p-4 bg-red-900/20 border border-red-800 rounded-md">
+              <p className="font-medium">Unable to load Discord servers</p>
+              <p className="text-sm mt-1">{error}</p>
+              <p className="text-xs mt-2 text-red-300">
+                Make sure you're logged in with Discord and have the necessary permissions.
+              </p>
+            </div>
+          )}
           {servers.map((server) => (
             <div key={server.id} className="flex items-center justify-between p-3 rounded-md hover:bg-zinc-700/50 border border-zinc-700/50">
               <div className="flex items-center">

@@ -69,8 +69,16 @@ export function RecentActivity() {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {loading && <p>Loading activity...</p>}
-          {error && <p className="text-red-500">{error}</p>}
+          {loading && <p className="text-zinc-400">Loading activity...</p>}
+          {error && (
+            <div className="text-red-400 p-4 bg-red-900/20 border border-red-800 rounded-md">
+              <p className="font-medium">Unable to load recent activity</p>
+              <p className="text-sm mt-1">{error}</p>
+              <p className="text-xs mt-2 text-red-300">
+                Activity data will appear once you have servers with the bot installed.
+              </p>
+            </div>
+          )}
           {activities.map((activity) => {
             const Icon = getActivityIcon(activity.title);
             const color = getActivityColor(activity.title);

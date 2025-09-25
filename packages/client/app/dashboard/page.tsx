@@ -17,7 +17,7 @@ interface Stats {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession({
+  const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
       redirect('/')
@@ -27,6 +27,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [ownedCount, setOwnedCount] = useState<number>(0);
   const [botActiveCount, setBotActiveCount] = useState<number>(0);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // Set client flag to prevent hydration mismatch
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -68,7 +74,9 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-6 lg:px-8 py-4">
-      <h1 className="text-3xl font-bold">Welcome back, {session?.user?.name}! 👋</h1>
+      <h1 className="text-3xl font-bold">
+        Welcome back, {isClient && session?.user?.name ? session.user.name : 'User'}! 👋
+      </h1>
       <p className="text-zinc-400 mb-8">Manage your Discord servers and support tickets from this dashboard.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">

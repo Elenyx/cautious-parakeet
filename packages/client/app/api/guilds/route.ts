@@ -2,8 +2,9 @@ import { getServerSession } from "next-auth"
 import { authOptions, type DiscordGuild } from "@/lib/auth"
 import { NextRequest, NextResponse } from "next/server"
 import { ClientRedisService } from "@/lib/redis"
-import { cachedDiscordFetch, createRateLimitedRoute } from "@/lib/rate-limit"
+import { createRateLimitedRoute } from "@/lib/rate-limit"
 import { botApiPost } from "@/lib/bot-api"
+import { discordApi } from "@/lib/discord-api-client"
 
 /**
  * Fetches the guilds (servers) of the authenticated user from the Discord API.
@@ -56,68 +57,38 @@ async function getGuildsHandler(req: NextRequest) {
       })
     }
 
-    // Fetch from Discord API with rate limiting and caching
-    // Only fetch guilds where user has MANAGE_GUILD permission (0x20)
+    // Use enhanced Discord API client with built-in rate limiting and caching
     let guilds: DiscordGuild[]
-    if (isFresh) {
-      // Bypass shared cache for real-time check
-      const res = await fetch("https://discord.com/api/v10/users/@me/guilds?with_counts=false", {
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-          Accept: "application/json",
-        },
-        cache: "no-store",
-      })
-      if (!res.ok) {
-        // If fresh fetch fails, try to serve cached data
-        if (cachedGuilds) {
-          console.warn("/api/guilds fresh fetch failed - serving stale cached guilds")
-          return NextResponse.json(cachedGuilds, {
-            headers: { 'X-From-Cache': 'stale' },
-          })
-        }
-        return NextResponse.json({ error: "Failed to fetch guilds" }, { status: res.status })
+    try {
+      guilds = await discordApi.getUserGuilds(session.accessToken, userId, isFresh)
+      console.log(`/api/guilds: fetched ${guilds.length} guilds for user ${userId}`)
+    } catch (error: unknown) {
+      console.error("/api/guilds Discord API error:", error)
+      
+      // Try to get cached guilds as fallback
+      if (cachedGuilds) {
+        console.warn("/api/guilds: falling back to cached guilds due to API error")
+        return NextResponse.json(cachedGuilds, {
+          headers: { 'X-From-Cache': 'fallback' },
+        })
       }
-      guilds = await res.json()
-    } else {
-      try {
-        guilds = await cachedDiscordFetch(
-          "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
-          {
-            headers: {
-              Authorization: `Bearer ${session.accessToken}`,
-              Accept: "application/json",
-            },
-          },
-          `discord:guilds:${userId}`,
-          300 // Cache for 5 minutes to reduce API calls
-        ) as DiscordGuild[]
-      } catch (e: unknown) {
-        // If rate limited, try to serve stale cache if available
-        if (cachedGuilds) {
-          console.warn("/api/guilds rate limited - serving stale cached guilds")
-          return NextResponse.json(cachedGuilds, {
-            headers: { 'X-From-Cache': 'stale' },
-          })
-        }
-        // Otherwise surface a 429 with Retry-After to the client
+      
+      // If no cached data available, return appropriate error
+      if (error instanceof Error && error.message.includes('Rate limited')) {
         return NextResponse.json(
           { error: "Discord rate limited. Please retry shortly." },
           { status: 429, headers: { 'Retry-After': '30' } }
         )
       }
+      
+      return NextResponse.json(
+        { error: "Failed to fetch guilds from Discord API" },
+        { status: 500 }
+      )
     }
 
-    // Filter guilds to only include those where user has MANAGE_GUILD permission (0x20) or is owner
-    const manageableGuilds = guilds.filter(guild => {
-      // Check if user is owner
-      if (guild.owner) return true
-      
-      // Check if user has MANAGE_GUILD permission (0x20)
-      const permissions = parseInt(guild.permissions || '0')
-      const MANAGE_GUILD = 0x20
-      return (permissions & MANAGE_GUILD) === MANAGE_GUILD
-    })
+    // Filter guilds to only include those where user has MANAGE_GUILD permission or is owner
+    const manageableGuilds = discordApi.filterGuildsByPermission(guilds, 'MANAGE_GUILD')
 
     // Check bot presence in each guild using the bot service
     let guildsWithBotStatus = manageableGuilds
