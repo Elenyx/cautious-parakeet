@@ -15,13 +15,12 @@ export class RateLimitMiddleware {
     try {
       const isLimited = await this.redis.isRateLimited(endpoint);
       if (isLimited) {
-        // Get the TTL to know when the rate limit expires
-        const ttl = await this.redis['redis'].ttl(`client:ratelimit:${endpoint}`);
-        return { limited: true, retryAfter: ttl > 0 ? ttl : 60 };
+        // Return a default retry after time since we can't access Redis TTL directly
+        return { limited: true, retryAfter: 60 };
       }
       return { limited: false };
     } catch (error) {
-      console.error('[RateLimit] Error checking rate limit:', error);
+      console.warn('[RateLimit] Error checking rate limit:', error);
       return { limited: false };
     }
   }
@@ -34,7 +33,7 @@ export class RateLimitMiddleware {
       await this.redis.setRateLimit(endpoint, retryAfter);
       console.warn(`[RateLimit] Rate limited for ${endpoint}, retry after ${retryAfter}s`);
     } catch (error) {
-      console.error('[RateLimit] Error setting rate limit:', error);
+      console.warn('[RateLimit] Error setting rate limit:', error);
     }
   }
 
@@ -65,10 +64,11 @@ export class RateLimitMiddleware {
 
       try {
         return await handler(req);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Check if this is a Discord API rate limit error
-        if (error.status === 429 || error.code === 429) {
-          const retryAfter = error.retry_after || 60;
+        const errorObj = error as { status?: number; code?: number; retry_after?: number };
+        if (errorObj.status === 429 || errorObj.code === 429) {
+          const retryAfter = errorObj.retry_after || 60;
           await this.handleRateLimit(endpoint, retryAfter);
           
           return NextResponse.json(
@@ -138,9 +138,9 @@ export class RateLimitMiddleware {
       }
 
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If it's a rate limit error, handle it
-      if (error.message.includes('Rate limited')) {
+      if (error instanceof Error && error.message.includes('Rate limited')) {
         throw error;
       }
 
@@ -166,7 +166,7 @@ export async function cachedDiscordFetch(
   options: RequestInit = {},
   cacheKey?: string,
   cacheTTL: number = 300
-): Promise<any> {
+): Promise<unknown> {
   const response = await RateLimitMiddleware.fetchWithCache(url, options, cacheKey, cacheTTL);
   
   if (!response.ok) {
