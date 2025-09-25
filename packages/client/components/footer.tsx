@@ -1,9 +1,59 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
 import { Github, Twitter, MessageCircle, Mail, Heart } from "lucide-react"
+import { DiscordServerWidget } from "@/components/discord-server-widget"
+import { DiscordInviteWidget } from "@/components/discord-invite-widget"
+import { useEffect, useState } from "react"
+
+interface CommunityStats {
+  memberCount: number;
+  onlineCount: number;
+  dailyMessages: number;
+}
 
 export function Footer() {
+  const [stats, setStats] = useState<CommunityStats>({
+    memberCount: 0,
+    onlineCount: 0,
+    dailyMessages: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/discord-server-stats');
+        if (response.ok) {
+          const data = await response.json();
+          setStats({
+            memberCount: data.memberCount || 0,
+            onlineCount: data.onlineCount || 0,
+            dailyMessages: data.ticketsProcessed || 0
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch community stats:', error);
+        // Keep default values
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M+`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(0)}K+`;
+    }
+    return num.toString();
+  };
+
   return (
     <footer className="relative bg-gradient-to-b from-background to-card/50 border-t border-border/50 overflow-hidden">
       {/* Background Pattern */}
@@ -17,6 +67,104 @@ export function Footer() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-16">
+        {/* Discord Server Widget Section */}
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Join Our Community</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Connect with other users, get support, and stay updated with the latest TicketMesh news and features.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            {/* Features Section */}
+            <div className="space-y-6">
+              <div className="grid gap-4">
+                <div className="p-6 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01.99L14 10l-1-2H9.5l-1 2v2h2v8h2v-6h2v6h2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">Active Community</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Connect with Discord server owners and moderators who are actively using TicketMesh.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">24/7 Support</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Get help from our community and support team whenever you need it.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-xl bg-card/50 border border-border/50 backdrop-blur-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">Early Access</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Be the first to try new features and updates before they're released.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 pt-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-500 mb-1">
+                    {loading ? '...' : formatNumber(stats.memberCount)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Members</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-500 mb-1">
+                    {loading ? '...' : '24/7'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Active</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-500 mb-1">
+                    {loading ? '...' : formatNumber(stats.dailyMessages)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Tickets Processed</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Discord Widget */}
+            <div className="flex justify-center lg:justify-end">
+              <DiscordServerWidget 
+                serverId="1420828084805959702" 
+                theme="dark"
+                width={350}
+                height={500}
+                className="shadow-2xl shadow-primary/20"
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand Section */}
           <div className="lg:col-span-1 space-y-6">

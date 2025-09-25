@@ -39,6 +39,10 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: '/',
+    error: '/',
+  },
   callbacks: {
     /**
      * JWT callback: attach Discord OAuth access_token and user info to the JWT so it can be surfaced in the session.
@@ -65,6 +69,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  debug: process.env.NODE_ENV === 'development',
 };
 
 /**

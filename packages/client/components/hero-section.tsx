@@ -2,8 +2,38 @@
 
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
+
+interface GlobalStats {
+  activeServers: number;
+  totalTicketsProcessed: number;
+  uptime: number;
+  communityMembers: number;
+  dailyMessages: number;
+}
 
 export function HeroSection() {
+  const [stats, setStats] = useState<GlobalStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/global-stats', { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch global stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const handleAddToDiscord = async () => {
     try {
       const response = await fetch('/api/discord/bot/invite')
@@ -15,6 +45,15 @@ export function HeroSection() {
       console.error('Failed to get invite URL:', error)
     }
   }
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M+`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(0)}K+`;
+    }
+    return num.toString();
+  };
   return (
     <section className="py-20 lg:py-32">
       <div className="container mx-auto px-6 lg:px-8">
@@ -49,6 +88,7 @@ export function HeroSection() {
               size="lg"
               variant="outline"
               className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground bg-transparent"
+              onClick={() => window.open('https://discord.gg/EGnvFKd6p3', '_blank')}
             >
               Join Discord Community
             </Button>
@@ -56,18 +96,25 @@ export function HeroSection() {
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-3xl font-bold text-primary mb-2">50K+</div>
+              <div className="text-3xl font-bold text-primary mb-2">
+                {loading ? '...' : stats ? formatNumber(stats.activeServers) : '0'}
+              </div>
               <div className="text-muted-foreground">Active Servers</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-secondary mb-2">2M+</div>
+              <div className="text-3xl font-bold text-secondary mb-2">
+                {loading ? '...' : stats ? formatNumber(stats.totalTicketsProcessed) : '0'}
+              </div>
               <div className="text-muted-foreground">Tickets Processed</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary mb-2">99.9%</div>
+              <div className="text-3xl font-bold text-primary mb-2">
+                {loading ? '...' : stats ? `${stats.uptime.toFixed(1)}%` : '0%'}
+              </div>
               <div className="text-muted-foreground">Uptime</div>
             </div>
           </div>
+
         </div>
       </div>
     </section>
