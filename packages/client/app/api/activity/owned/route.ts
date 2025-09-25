@@ -45,7 +45,7 @@ export async function GET() {
           },
         },
         `discord:guilds:${session.user.id}`,
-        60 // Cache for 1 minute for real-time updates
+        300 // Cache for 5 minutes to reduce API calls
       ) as DiscordGuild[];
     } catch (discordErr: unknown) {
       console.error("/api/activity/owned Discord API error:", discordErr);
@@ -112,7 +112,7 @@ export async function GET() {
       
       // Cache the successful response
       try {
-        await redis.cacheApiResponse(cachedActivityKey, activity, 120); // Cache for 2 minutes
+        await redis.cacheApiResponse(cachedActivityKey, activity, 600); // Cache for 10 minutes to reduce API calls
       } catch (cacheErr) {
         console.warn("/api/activity/owned cache write error:", cacheErr);
       }

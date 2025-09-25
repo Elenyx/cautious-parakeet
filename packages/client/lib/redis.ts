@@ -220,21 +220,38 @@ export class ClientRedisService {
    * Check if we're being rate limited for a specific endpoint
    */
   async isRateLimited(endpoint: string): Promise<boolean> {
+    const rateLimitInfo = await this.getRateLimitInfo(endpoint);
+    return rateLimitInfo !== null;
+  }
+
+  /**
+   * Get rate limit information for a specific endpoint
+   */
+  async getRateLimitInfo(endpoint: string): Promise<{ retryAfter: number } | null> {
     const rateLimitKey = `client:ratelimit:${endpoint}`;
     
     if (this.redis && this.isRedisAvailable) {
       try {
-        const exists = await this.redis.exists(rateLimitKey);
-        return exists === 1;
+        const data = await this.redis.get(rateLimitKey);
+        if (data) {
+          const parsed = JSON.parse(data);
+          return { retryAfter: parsed.retryAfter || 30 };
+        }
+        return null;
       } catch (error) {
-        console.warn('[Redis] Error checking rate limit, falling back to memory:', error);
+        console.warn('[Redis] Error getting rate limit info, falling back to memory:', error);
         this.isRedisAvailable = false;
       }
     }
     
     // Fallback to memory cache
     const cached = this.memoryCache.get(rateLimitKey);
-    return cached && cached.expiry > Date.now();
+    if (cached && cached.expiry > Date.now()) {
+      return { retryAfter: (cached.data as any).retryAfter || 30 };
+    } else if (cached) {
+      this.memoryCache.delete(rateLimitKey);
+    }
+    return null;
   }
 
   /**
@@ -242,10 +259,11 @@ export class ClientRedisService {
    */
   async setRateLimit(endpoint: string, retryAfterSeconds: number): Promise<void> {
     const rateLimitKey = `client:ratelimit:${endpoint}`;
+    const rateLimitData = { retryAfter: retryAfterSeconds, timestamp: Date.now() };
     
     if (this.redis && this.isRedisAvailable) {
       try {
-        await this.redis.setex(rateLimitKey, retryAfterSeconds, '1');
+        await this.redis.setex(rateLimitKey, retryAfterSeconds, JSON.stringify(rateLimitData));
         return;
       } catch (error) {
         console.warn('[Redis] Error setting rate limit, falling back to memory:', error);
@@ -255,7 +273,7 @@ export class ClientRedisService {
     
     // Fallback to memory cache
     const expiry = Date.now() + (retryAfterSeconds * 1000);
-    this.memoryCache.set(rateLimitKey, { data: '1', expiry });
+    this.memoryCache.set(rateLimitKey, { data: rateLimitData, expiry });
   }
 
   /**

@@ -7,16 +7,16 @@ import { ClientRedisService } from './redis';
  */
 export class RateLimitMiddleware {
   private static redis = ClientRedisService.getInstance();
+  private static pendingRequests = new Map<string, Promise<Response>>();
 
   /**
    * Check if an endpoint is currently rate limited
    */
   static async checkRateLimit(endpoint: string): Promise<{ limited: boolean; retryAfter?: number }> {
     try {
-      const isLimited = await this.redis.isRateLimited(endpoint);
-      if (isLimited) {
-        // Return a shorter retry after time for better real-time experience
-        return { limited: true, retryAfter: 30 };
+      const rateLimitInfo = await this.redis.getRateLimitInfo(endpoint);
+      if (rateLimitInfo) {
+        return { limited: true, retryAfter: rateLimitInfo.retryAfter };
       }
       return { limited: false };
     } catch (error) {
@@ -93,7 +93,17 @@ export class RateLimitMiddleware {
   }
 
   /**
-   * Fetch with automatic rate limit handling and caching
+   * Generate a unique key for request deduplication
+   */
+  private static generateRequestKey(url: string, options: RequestInit = {}): string {
+    const method = options.method || 'GET';
+    const headers = options.headers ? JSON.stringify(options.headers) : '';
+    const body = options.body ? JSON.stringify(options.body) : '';
+    return `${method}:${url}:${headers}:${body}`;
+  }
+
+  /**
+   * Fetch with automatic rate limit handling, caching, and deduplication
    */
   static async fetchWithCache(
     url: string, 
@@ -113,6 +123,13 @@ export class RateLimitMiddleware {
       }
     }
 
+    // Check for pending requests to prevent duplicates
+    const requestKey = this.generateRequestKey(url, options);
+    if (this.pendingRequests.has(requestKey)) {
+      console.log(`[Deduplication] Reusing pending request for ${url}`);
+      return this.pendingRequests.get(requestKey)!;
+    }
+
     // Check rate limit
     const endpoint = new URL(url).pathname;
     const rateLimitCheck = await this.checkRateLimit(endpoint);
@@ -120,11 +137,34 @@ export class RateLimitMiddleware {
       throw new Error(`Rate limited for ${endpoint}, retry after ${rateLimitCheck.retryAfter}s`);
     }
 
+    // Create the request promise and store it for deduplication
+    const requestPromise = this.executeRequest(url, options, cacheKey, cacheTTL);
+    this.pendingRequests.set(requestKey, requestPromise);
+
+    try {
+      const response = await requestPromise;
+      return response;
+    } finally {
+      // Clean up the pending request
+      this.pendingRequests.delete(requestKey);
+    }
+  }
+
+  /**
+   * Execute the actual request
+   */
+  private static async executeRequest(
+    url: string,
+    options: RequestInit,
+    cacheKey?: string,
+    cacheTTL: number = 300
+  ): Promise<Response> {
     try {
       const response = await fetch(url, options);
 
       // Handle rate limit response
       if (response.status === 429) {
+        const endpoint = new URL(url).pathname;
         const retryAfter = parseInt(response.headers.get('retry-after') || '60');
         await this.handleRateLimit(endpoint, retryAfter);
         throw new Error(`Rate limited, retry after ${retryAfter}s`);

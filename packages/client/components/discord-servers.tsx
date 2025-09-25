@@ -19,6 +19,7 @@ export function DiscordServers() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const pollTimerRef = useRef<NodeJS.Timer | null>(null);
+  const pendingRequestsRef = useRef<Set<string>>(new Set());
 
   const generateBotInvite = async (guildId: string) => {
     try {
@@ -75,8 +76,18 @@ export function DiscordServers() {
 
   const fetchGuilds = useCallback(async (options?: { fresh?: boolean }) => {
     const fresh = options?.fresh ?? false;
+    const requestKey = `guilds:${fresh ? 'fresh' : 'cached'}`;
+    
+    // Prevent duplicate requests
+    if (pendingRequestsRef.current.has(requestKey)) {
+      console.log(`[Deduplication] Skipping duplicate guild fetch request`);
+      return;
+    }
+    
     try {
       if (!loading) setRefreshing(true);
+      pendingRequestsRef.current.add(requestKey);
+      
       const response = await fetch(`/api/guilds${fresh ? '?fresh=1' : ''}`, { cache: fresh ? 'no-store' : 'default' });
       
       // Check if we got cached data (indicated by X-From-Cache header)
@@ -101,15 +112,26 @@ export function DiscordServers() {
         console.log(`✅ Successfully loaded ${data.length} guilds`);
       }
 
-      // Fetch active tickets for each server
+      // Fetch active tickets for each server with deduplication
       const ticketPromises = data.map(async (server: GuildWithTickets) => {
+        const ticketRequestKey = `tickets:${server.id}`;
+        
+        // Skip if already fetching tickets for this server
+        if (pendingRequestsRef.current.has(ticketRequestKey)) {
+          return server;
+        }
+        
         try {
+          pendingRequestsRef.current.add(ticketRequestKey);
           const ticketResponse = await fetch(`/api/guilds/${server.id}`, { cache: 'no-store' });
           if (ticketResponse.ok) {
             const ticketData = await ticketResponse.json();
             return { ...server, activeTickets: ticketData.activeTickets };
           }
         } catch {}
+        finally {
+          pendingRequestsRef.current.delete(ticketRequestKey);
+        }
         return server;
       });
 
@@ -131,6 +153,7 @@ export function DiscordServers() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      pendingRequestsRef.current.delete(requestKey);
     }
   }, [loading, servers]);
 

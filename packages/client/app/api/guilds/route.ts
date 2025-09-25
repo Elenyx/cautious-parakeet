@@ -90,7 +90,7 @@ async function getGuildsHandler(req: NextRequest) {
             },
           },
           `discord:guilds:${userId}`,
-          60 // Cache for 1 minute for real-time updates
+          300 // Cache for 5 minutes to reduce API calls
         ) as DiscordGuild[]
       } catch (e: unknown) {
         // If rate limited, try to serve stale cache if available
@@ -159,7 +159,7 @@ async function getGuildsHandler(req: NextRequest) {
     // Cache the final result with bot presence
     // Only cache when not explicitly fresh; otherwise keep result ephemeral
     if (!isFresh) {
-      await redis.cacheUserGuilds(userId, guildsWithBotStatus, 60) // Cache for 1 minute for real-time updates
+      await redis.cacheUserGuilds(userId, guildsWithBotStatus, 300) // Cache for 5 minutes to reduce API calls
     }
 
     return NextResponse.json(guildsWithBotStatus)
