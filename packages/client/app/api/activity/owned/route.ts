@@ -65,7 +65,9 @@ export async function GET() {
               headers: { 'X-From-Cache': 'activity' }
             });
           }
-          return NextResponse.json({ error: "Failed to fetch guilds from Discord" }, { status: 500 });
+          // Return empty array instead of 500 error - better user experience
+          console.warn("/api/activity/owned no data available, returning empty array");
+          return NextResponse.json([]);
         }
       } catch (fallbackErr) {
         console.error("/api/activity/owned fallback error:", fallbackErr);
@@ -74,7 +76,9 @@ export async function GET() {
             headers: { 'X-From-Cache': 'activity' }
           });
         }
-        return NextResponse.json({ error: "Failed to fetch guilds from Discord" }, { status: 500 });
+        // Return empty array instead of 500 error - better user experience
+        console.warn("/api/activity/owned fallback failed, returning empty array");
+        return NextResponse.json([]);
       }
     }
 

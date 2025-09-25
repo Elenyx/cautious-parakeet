@@ -152,13 +152,11 @@ export function DiscordServers() {
     
     initialLoad();
     
-    // Start background polling every 20s for near real-time updates
-    pollTimerRef.current = setInterval(() => {
-      fetchGuilds({ fresh: true });
-    }, 20000);
+    // No auto-refresh to prevent rate limiting
+    // Users can manually refresh using the refresh button
 
     return () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      // Cleanup if needed
     };
   }, [fetchGuilds]);
 
@@ -166,9 +164,15 @@ export function DiscordServers() {
     <Card className="bg-zinc-800 border-zinc-700">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-white">Your Discord Servers</CardTitle>
-        <Button variant="outline" size="sm" className="border-zinc-600 hover:bg-zinc-700" onClick={() => fetchGuilds({ fresh: true })} disabled={refreshing}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="border-zinc-600 hover:bg-zinc-700 disabled:opacity-50" 
+          onClick={() => fetchGuilds({ fresh: true })} 
+          disabled={refreshing}
+        >
           <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing' : 'Refresh'}
+          {refreshing ? 'Refreshing...' : 'Refresh'}
         </Button>
       </CardHeader>
       <CardContent>

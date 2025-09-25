@@ -29,6 +29,21 @@ async function getGuildsHandler(req: NextRequest) {
     const freshParam = req.nextUrl.searchParams.get('fresh')
     const isFresh = freshParam === '1' ||
       (req.headers.get('cache-control')?.toLowerCase().includes('no-cache') ?? false)
+    
+    // Check if we're currently rate limited before attempting fresh fetch
+    if (isFresh) {
+      const isRateLimited = await redis.isRateLimited('/api/guilds')
+      if (isRateLimited) {
+        console.warn("/api/guilds fresh request blocked due to rate limiting")
+        // Force non-fresh behavior to use cache
+        const cachedGuilds = await redis.getCachedUserGuilds(userId)
+        if (cachedGuilds) {
+          return NextResponse.json(cachedGuilds, {
+            headers: { 'X-From-Cache': 'rate-limited' }
+          })
+        }
+      }
+    }
 
     // Always check cache first - even for fresh requests, we'll use cache as fallback
     const cachedGuilds = await redis.getCachedUserGuilds(userId)

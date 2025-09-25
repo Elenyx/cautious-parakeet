@@ -59,8 +59,11 @@ export default function DashboardPage() {
     };
 
     fetchStats();
-    const interval = setInterval(fetchStats, 20000);
-    return () => clearInterval(interval);
+    // No auto-refresh to prevent rate limiting
+    // Users can manually refresh the page if needed
+    return () => {
+      // Cleanup if needed
+    };
   }, []);
 
   return (
