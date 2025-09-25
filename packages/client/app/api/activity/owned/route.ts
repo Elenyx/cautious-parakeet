@@ -2,11 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-<<<<<<< Current (Your changes)
-import { BotApiAuthError, BotApiConnectionError, botApiGet } from "@/lib/bot-api";
-=======
 import { botApiGet, BotApiAuthError, BotApiConnectionError } from "@/lib/bot-api";
->>>>>>> Incoming (Background Agent changes)
 
 /**
  * GET /api/activity/owned
