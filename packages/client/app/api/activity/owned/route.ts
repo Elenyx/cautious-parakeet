@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { botApiGet } from "@/lib/bot-api";
 
 /**
@@ -17,7 +18,12 @@ export async function GET() {
     }
 
     // Reuse our guilds API (which handles caching, permissions and presence)
-    const guildsRes = await fetch(`${process.env.NEXTAUTH_URL ?? ''}/api/guilds`, { cache: 'no-store' });
+    // Forward the incoming request cookies to preserve the session on server-side fetch
+    const cookieHeader = cookies().toString();
+    const guildsRes = await fetch('/api/guilds', {
+      cache: 'no-store',
+      headers: { cookie: cookieHeader },
+    });
     if (!guildsRes.ok) {
       const text = await guildsRes.text().catch(() => "");
       console.error(`/api/activity/owned guilds api error ${guildsRes.status}:`, text);
