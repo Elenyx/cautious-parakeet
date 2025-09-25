@@ -50,6 +50,47 @@ export async function execute(interaction: Interaction, client: Client) {
             return;
         }
 
+        // Handle context menu commands (Message and User)
+        if (interaction.isMessageContextMenuCommand() || interaction.isUserContextMenuCommand()) {
+            const command = client.commands.get(interaction.commandName);
+
+            if (!command) {
+                console.error(`No context menu command matching ${interaction.commandName} was found.`);
+                await errorLogger.logCommandError(
+                    new Error(`Context menu command not found: ${interaction.commandName}`),
+                    {
+                        guildId: interaction.guildId || undefined,
+                        userId: interaction.user.id,
+                        commandName: interaction.commandName
+                    }
+                );
+                return;
+            }
+
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error('Error executing context menu command:', error);
+                await errorLogger.logCommandError(error as Error, {
+                    guildId: interaction.guildId || undefined,
+                    userId: interaction.user.id,
+                    commandName: interaction.commandName
+                });
+
+                const reply = {
+                    content: 'There was an error while executing this command!',
+                    ephemeral: true
+                };
+                
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp(reply);
+                } else {
+                    await interaction.reply(reply);
+                }
+            }
+            return;
+        }
+
         // Handle button interactions
         if (interaction.isButton()) {
             // Handle setup wizard interactions
