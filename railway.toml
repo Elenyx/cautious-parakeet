@@ -20,6 +20,12 @@ healthcheckTimeout = 300
 [services.variables]
 NODE_ENV = "production"
 PORT = "3001"
+# IMPORTANT: Set these environment variables in Railway Dashboard:
+# DISCORD_TOKEN = "your_discord_bot_token"
+# DISCORD_CLIENT_ID = "your_discord_client_id"
+# DATABASE_URL = "your_database_connection_string"
+# API_SECRET = "your_api_secret_key"
+# LOG_LEVEL = "info"
 
 # TicketMesh Client Service  
 [[services]]
@@ -43,3 +49,10 @@ healthcheckTimeout = 300
 [services.variables]
 NODE_ENV = "production"
 PORT = "3000"
+BOT_API_BASE_URL = "https://ticketmesh-bot-production.up.railway.app"
+# NextAuth Configuration - SET THESE IN RAILWAY DASHBOARD
+# NEXTAUTH_SECRET = "${{NEXTAUTH_SECRET}}"
+# NEXTAUTH_URL = "https://ticketmesh-production.up.railway.app"
+# Discord OAuth Configuration - SET THESE IN RAILWAY DASHBOARD
+# DISCORD_CLIENT_ID = "${{DISCORD_CLIENT_ID}}"
+# DISCORD_CLIENT_SECRET = "${{DISCORD_CLIENT_SECRET}}"
