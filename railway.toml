@@ -51,7 +51,7 @@ healthcheckTimeout = 300
 [services.variables]
 NODE_ENV = "production"
 PORT = "3000"
-BOT_API_BASE_URL = "${{ticketmesh-bot.RAILWAY_PUBLIC_DOMAIN}}"
+BOT_API_BASE_URL = "${{ticketmesh-bot.RAILWAY_PRIVATE_DOMAIN}}"
 NEXT_PUBLIC_API_URL = "https://ticketmesh.win"
 DATABASE_URL = "${{DATABASE_URL}}"
 # Use Railway public proxy for Redis to avoid internal DNS resolution issues
