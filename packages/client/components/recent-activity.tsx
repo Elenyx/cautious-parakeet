@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, PlusCircle, User, Settings } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 interface Activity {
   id: string; // bot returns string ids
@@ -15,11 +15,12 @@ export function RecentActivity() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const pollRef = useRef<NodeJS.Timer | null>(null);
 
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const response = await fetch("/api/activity/owned");
+        const response = await fetch("/api/activity/owned", { cache: 'no-store' });
         if (!response.ok) {
           throw new Error("Failed to fetch activity");
         }
@@ -40,6 +41,11 @@ export function RecentActivity() {
     };
 
     fetchActivity();
+    // Poll every 20s for fresh activity
+    pollRef.current = setInterval(fetchActivity, 20000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
   const getActivityIcon = (title: string) => {

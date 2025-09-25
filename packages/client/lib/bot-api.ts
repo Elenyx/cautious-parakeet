@@ -50,12 +50,15 @@ function createBotApiHeaders(): HeadersInit {
  * @throws {BotApiAuthError} When the request fails due to authentication issues
  */
 export async function botApiGet(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const base = process.env.BOT_API_BASE_URL;
-  if (!base) {
+  const rawBase = process.env.BOT_API_BASE_URL;
+  if (!rawBase) {
     throw new BotApiConnectionError('BOT_API_BASE_URL not configured');
   }
 
-  const url = `${base}${endpoint}`;
+  // Normalize base and endpoint to avoid duplicate or missing slashes
+  const base = rawBase.replace(/\/+$/, '');
+  const ep = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${base}${ep}`;
   const headers = {
     ...createBotApiHeaders(),
     ...options.headers,
@@ -102,12 +105,14 @@ export async function botApiGet(endpoint: string, options: RequestInit = {}): Pr
  * @throws {BotApiAuthError} When the request fails due to authentication issues
  */
 export async function botApiPost(endpoint: string, body?: unknown, options: RequestInit = {}): Promise<Response> {
-  const base = process.env.BOT_API_BASE_URL;
-  if (!base) {
+  const rawBase = process.env.BOT_API_BASE_URL;
+  if (!rawBase) {
     throw new BotApiConnectionError('BOT_API_BASE_URL not configured');
   }
 
-  const url = `${base}${endpoint}`;
+  const base = rawBase.replace(/\/+$/, '');
+  const ep = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${base}${ep}`;
   const headers = {
     ...createBotApiHeaders(),
     ...options.headers,
@@ -151,11 +156,12 @@ export async function botApiPost(endpoint: string, body?: unknown, options: Requ
  * @throws {BotApiConnectionError} When the request fails due to network issues
  */
 export async function botApiHealth(): Promise<Response> {
-  const base = process.env.BOT_API_BASE_URL;
-  if (!base) {
+  const rawBase = process.env.BOT_API_BASE_URL;
+  if (!rawBase) {
     throw new BotApiConnectionError('BOT_API_BASE_URL not configured');
   }
 
+  const base = rawBase.replace(/\/+$/, '');
   const url = `${base}/health`;
 
   try {

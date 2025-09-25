@@ -16,18 +16,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch user's guilds from Discord API v10
-    const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    });
-
+    // Reuse our guilds API (which handles caching, permissions and presence)
+    const guildsRes = await fetch(`${process.env.NEXTAUTH_URL ?? ''}/api/guilds`, { cache: 'no-store' });
     if (!guildsRes.ok) {
       const text = await guildsRes.text().catch(() => "");
-      console.error(`/api/activity/owned Discord guilds error ${guildsRes.status}:`, text);
+      console.error(`/api/activity/owned guilds api error ${guildsRes.status}:`, text);
       return NextResponse.json({ error: "Failed to fetch guilds" }, { status: guildsRes.status });
     }
 

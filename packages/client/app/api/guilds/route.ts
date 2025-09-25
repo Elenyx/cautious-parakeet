@@ -56,17 +56,33 @@ async function getGuildsHandler(req: NextRequest) {
       }
       guilds = await res.json()
     } else {
-      guilds = await cachedDiscordFetch(
-        "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
-        {
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-            Accept: "application/json",
+      try {
+        guilds = await cachedDiscordFetch(
+          "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
+          {
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`,
+              Accept: "application/json",
+            },
           },
-        },
-        `discord:guilds:${userId}`,
-        300 // Cache for 5 minutes
-      ) as DiscordGuild[]
+          `discord:guilds:${userId}`,
+          300 // Cache for 5 minutes
+        ) as DiscordGuild[]
+      } catch (e: unknown) {
+        // If rate limited, try to serve stale cache if available
+        const stale = await redis.getCachedUserGuilds(userId)
+        if (stale) {
+          console.warn("/api/guilds rate limited - serving stale cached guilds")
+          return NextResponse.json(stale, {
+            headers: { 'X-From-Cache': 'stale' },
+          })
+        }
+        // Otherwise surface a 429 with Retry-After to the client
+        return NextResponse.json(
+          { error: "Discord rate limited. Please retry shortly." },
+          { status: 429, headers: { 'Retry-After': '60' } }
+        )
+      }
     }
 
     // Filter guilds to only include those where user has MANAGE_GUILD permission (0x20) or is owner
