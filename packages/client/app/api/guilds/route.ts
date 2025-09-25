@@ -56,19 +56,6 @@ async function getGuildsHandler(req: NextRequest) {
       }
       guilds = await res.json()
     } else {
-<<<<<<< Current (Your changes)
-      guilds = await cachedDiscordFetch(
-        "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
-        {
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-            Accept: "application/json",
-          },
-        },
-        `discord:guilds:${userId}`,
-        300 // Cache for 5 minutes
-      ) as DiscordGuild[]
-=======
       try {
         guilds = await cachedDiscordFetch(
           "https://discord.com/api/v10/users/@me/guilds?with_counts=false",
@@ -96,7 +83,6 @@ async function getGuildsHandler(req: NextRequest) {
           { status: 429, headers: { 'Retry-After': '60' } }
         )
       }
->>>>>>> Incoming (Background Agent changes)
     }
 
     // Filter guilds to only include those where user has MANAGE_GUILD permission (0x20) or is owner
