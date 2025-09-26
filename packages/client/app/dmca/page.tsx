@@ -157,7 +157,7 @@ export default function DMCAPage() {
               </p>
               
               <div className="space-y-2 text-muted-foreground">
-                <p><strong>Email:</strong> dmca@ticketmesh.com</p>
+                <p><strong>Email:</strong> dmca@ticketmesh.win</p>
                 <p><strong>Subject Line:</strong> DMCA Copyright Infringement Notice</p>
                 <p><strong>Response Time:</strong> We will respond within 24-48 hours</p>
               </div>
@@ -386,7 +386,7 @@ export default function DMCAPage() {
             </p>
             
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Email:</strong> dmca@ticketmesh.com</p>
+              <p><strong>Email:</strong> dmca@ticketmesh.win</p>
               <p><strong>Discord:</strong> Join our support server</p>
               <p><strong>Website:</strong> Contact form on our website</p>
               <p><strong>Response Time:</strong> 24-48 hours for initial response</p>

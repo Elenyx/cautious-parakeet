@@ -449,7 +449,7 @@ export default function CookiePolicyPage() {
             </p>
             
             <div className="space-y-2 text-muted-foreground">
-              <p>• Email: privacy@ticketmesh.com</p>
+              <p>• Email: privacy@ticketmesh.win</p>
               <p>• Discord: Join our support server</p>
               <p>• Website: Contact form on our website</p>
             </div>

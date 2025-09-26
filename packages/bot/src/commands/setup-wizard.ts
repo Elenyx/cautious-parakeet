@@ -188,10 +188,19 @@ export async function showSetupWizard(interaction: ChatInputCommandInteraction |
             ephemeral: true
         });
     } else {
-        await interaction.update({
-            components: components,
-            flags: MessageFlags.IsComponentsV2
-        });
+        // Check if interaction has already been replied to
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+                components: components,
+                flags: MessageFlags.IsComponentsV2,
+                ephemeral: true
+            });
+        } else {
+            await interaction.update({
+                components: components,
+                flags: MessageFlags.IsComponentsV2
+            });
+        }
     }
 }
 
@@ -226,10 +235,19 @@ export async function showCategorySetup(interaction: ButtonInteraction) {
             )
     ];
 
-    await interaction.update({
-        components: components,
-        flags: MessageFlags.IsComponentsV2
-    });
+    // Check if interaction has already been replied to
+    if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+            components: components,
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true
+        });
+    } else {
+        await interaction.update({
+            components: components,
+            flags: MessageFlags.IsComponentsV2
+        });
+    }
 }
 
 /**
@@ -263,10 +281,19 @@ export async function showPanelSetup(interaction: ButtonInteraction) {
             )
     ];
 
-    await interaction.update({
-        components: components,
-        flags: MessageFlags.IsComponentsV2
-    });
+    // Check if interaction has already been replied to
+    if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+            components: components,
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true
+        });
+    } else {
+        await interaction.update({
+            components: components,
+            flags: MessageFlags.IsComponentsV2
+        });
+    }
 }
 
 /**
@@ -300,10 +327,19 @@ export async function showTranscriptSetup(interaction: ButtonInteraction) {
             )
     ];
 
-    await interaction.update({
-        components: components,
-        flags: MessageFlags.IsComponentsV2
-    });
+    // Check if interaction has already been replied to
+    if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+            components: components,
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true
+        });
+    } else {
+        await interaction.update({
+            components: components,
+            flags: MessageFlags.IsComponentsV2
+        });
+    }
 }
 
 /**
@@ -337,10 +373,19 @@ export async function showSupportRolesSetup(interaction: ButtonInteraction) {
             )
     ];
 
-    await interaction.update({
-        components: components,
-        flags: MessageFlags.IsComponentsV2
-    });
+    // Check if interaction has already been replied to
+    if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+            components: components,
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true
+        });
+    } else {
+        await interaction.update({
+            components: components,
+            flags: MessageFlags.IsComponentsV2
+        });
+    }
 }
 
 /**
@@ -398,8 +443,17 @@ export async function showAdvancedSetup(interaction: ButtonInteraction) {
             )
     ];
 
-    await interaction.update({
-        components: components,
-        flags: MessageFlags.IsComponentsV2
-    });
+    // Check if interaction has already been replied to
+    if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+            components: components,
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true
+        });
+    } else {
+        await interaction.update({
+            components: components,
+            flags: MessageFlags.IsComponentsV2
+        });
+    }
 }

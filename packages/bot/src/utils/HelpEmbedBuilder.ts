@@ -29,9 +29,7 @@ export class HelpEmbedBuilder {
     /**
      * Create navigation buttons for help categories
      */
-    createNavigationButtons(currentCategory?: string): ActionRowBuilder<ButtonBuilder> {
-        const row = new ActionRowBuilder<ButtonBuilder>();
-
+    createNavigationButtons(currentCategory?: string): ActionRowBuilder<ButtonBuilder>[] {
         const categories = [
             { id: 'help_overview', label: 'Overview', emoji: '🏠', style: ButtonStyle.Primary },
             { id: 'help_commands', label: 'Commands', emoji: '📋', style: ButtonStyle.Secondary },
@@ -41,19 +39,27 @@ export class HelpEmbedBuilder {
             { id: 'help_support', label: 'Support', emoji: '🆘', style: ButtonStyle.Success }
         ];
 
-        categories.forEach(category => {
+        // Split into two rows: first 3 buttons, then remaining 3 buttons
+        const firstRow = new ActionRowBuilder<ButtonBuilder>();
+        const secondRow = new ActionRowBuilder<ButtonBuilder>();
+
+        categories.forEach((category, index) => {
             const isCurrent = currentCategory === category.id;
-            row.addComponents(
-                new ButtonBuilder()
-                    .setCustomId(category.id)
-                    .setLabel(category.label)
-                    .setStyle(isCurrent ? ButtonStyle.Primary : category.style)
-                    .setEmoji(category.emoji)
-                    .setDisabled(isCurrent)
-            );
+            const button = new ButtonBuilder()
+                .setCustomId(category.id)
+                .setLabel(category.label)
+                .setStyle(isCurrent ? ButtonStyle.Primary : category.style)
+                .setEmoji(category.emoji)
+                .setDisabled(isCurrent);
+
+            if (index < 3) {
+                firstRow.addComponents(button);
+            } else {
+                secondRow.addComponents(button);
+            }
         });
 
-        return row;
+        return [firstRow, secondRow];
     }
 
     /**
@@ -65,12 +71,12 @@ export class HelpEmbedBuilder {
                 new ButtonBuilder()
                     .setLabel('Join Support Server')
                     .setStyle(ButtonStyle.Link)
-                    .setURL('https://discord.gg/ticketmesh')
+                    .setURL('https://discord.gg/EGnvFKd6p3')
                     .setEmoji('💬'),
                 new ButtonBuilder()
                     .setLabel('Visit Website')
                     .setStyle(ButtonStyle.Link)
-                    .setURL('https://ticketmesh.com')
+                    .setURL('https://ticketmesh.win')
                     .setEmoji('🌐'),
                 new ButtonBuilder()
                     .setLabel('GitHub')
@@ -125,7 +131,7 @@ export class HelpEmbedBuilder {
 
         return {
             embed,
-            components: [this.createNavigationButtons('help_overview')]
+            components: this.createNavigationButtons('help_overview')
         };
     }
 
@@ -171,7 +177,7 @@ export class HelpEmbedBuilder {
 
         return {
             embed,
-            components: [this.createNavigationButtons('help_commands')]
+            components: this.createNavigationButtons('help_commands')
         };
     }
 
@@ -234,7 +240,7 @@ export class HelpEmbedBuilder {
 
         return {
             embed,
-            components: [this.createNavigationButtons('help_setup')]
+            components: this.createNavigationButtons('help_setup')
         };
     }
 
@@ -292,7 +298,7 @@ export class HelpEmbedBuilder {
 
         return {
             embed,
-            components: [this.createNavigationButtons('help_tickets')]
+            components: this.createNavigationButtons('help_tickets')
         };
     }
 
@@ -352,7 +358,7 @@ export class HelpEmbedBuilder {
 
         return {
             embed,
-            components: [this.createNavigationButtons('help_permissions')]
+            components: this.createNavigationButtons('help_permissions')
         };
     }
 
@@ -369,7 +375,7 @@ export class HelpEmbedBuilder {
             {
                 name: '📚 Documentation',
                 value: [
-                    '• **Official Website** - [ticketmesh.com](https://ticketmesh.com)',
+                    '• **Official Website** - [ticketmesh.win](https://ticketmesh.win)',
                     '• **Setup Guide** - Complete configuration walkthrough',
                     '• **API Documentation** - For developers and integrations'
                 ].join('\n'),
@@ -408,7 +414,7 @@ export class HelpEmbedBuilder {
 
         return {
             embed,
-            components: [this.createNavigationButtons('help_support'), this.createQuickActionButtons()]
+            components: [...this.createNavigationButtons('help_support'), this.createQuickActionButtons()]
         };
     }
 

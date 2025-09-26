@@ -434,7 +434,7 @@ export default function TermsOfServicePage() {
             </p>
             
             <div className="space-y-2 text-muted-foreground">
-              <p>• Email: legal@ticketmesh.com</p>
+              <p>• Email: legal@ticketmesh.win</p>
               <p>• Discord: Join our support server</p>
               <p>• Website: Contact form on our website</p>
             </div>

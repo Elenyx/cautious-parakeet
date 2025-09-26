@@ -10,7 +10,7 @@ export default function FeaturesPage() {
       title="Features"
       description="Discover the powerful features that make TicketMesh the ultimate Discord ticket management solution."
       expectedDate="Q1 2025"
-      contactEmail="features@ticketmesh.com"
+      contactEmail="features@ticketmesh.win"
     />
   )
 }

@@ -33,7 +33,7 @@ export function MaintenancePage({
   title, 
   description, 
   expectedDate, 
-  contactEmail = "support@ticketmesh.com" 
+  contactEmail = "support@ticketmesh.win" 
 }: MaintenancePageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">

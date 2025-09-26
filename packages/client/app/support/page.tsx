@@ -10,7 +10,7 @@ export default function SupportPage() {
       title="Support"
       description="Get help with TicketMesh, report issues, and connect with our support team for assistance."
       expectedDate="Q1 2025"
-      contactEmail="support@ticketmesh.com"
+      contactEmail="support@ticketmesh.win"
     />
   )
 }

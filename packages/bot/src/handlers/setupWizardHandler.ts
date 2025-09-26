@@ -374,22 +374,24 @@ async function handleSupportRolesSelection(interaction: RoleSelectMenuInteractio
         const roleIds = selectedRoles.map(role => role.id);
         await guildConfigDAO.upsertGuildConfig({ guild_id: guildId, support_role_ids: roleIds });
 
-        const embed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle('✅ Support Roles Configured')
-            .setDescription('Support roles have been updated successfully!')
-            .addFields({
-                name: 'Selected Roles',
-                value: selectedRoles.map(role => `• ${role}`).join('\n'),
-                inline: false
-            })
-            .addFields({
-                name: 'Permissions',
-                value: 'These roles can now manage tickets and access ticket channels.',
-                inline: false
-            });
-
         const components = [
+            new ContainerBuilder()
+                .setAccentColor(0x00ff00)
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent("**✅ Support Roles Configured**"),
+                    new TextDisplayBuilder().setContent("Support roles have been updated successfully!"),
+                )
+                .addSeparatorComponents(
+                    new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true),
+                )
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent("**Selected Roles**"),
+                    new TextDisplayBuilder().setContent(selectedRoles.map(role => `• ${role}`).join('\n')),
+                )
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent("**Permissions**"),
+                    new TextDisplayBuilder().setContent("These roles can now manage tickets and access ticket channels."),
+                ),
             new ActionRowBuilder<ButtonBuilder>()
                 .addComponents(
                     new ButtonBuilder()
@@ -399,7 +401,7 @@ async function handleSupportRolesSelection(interaction: RoleSelectMenuInteractio
                 )
         ];
 
-        await interaction.reply({ embeds: [embed], components: components, ephemeral: true });
+        await interaction.reply({ components: components, ephemeral: true, flags: MessageFlags.IsComponentsV2 });
     } catch (error) {
         console.error('Error in handleSupportRolesSelection:', error);
         if (!interaction.replied && !interaction.deferred) {
@@ -442,10 +444,19 @@ async function showErrorLogSetup(interaction: ButtonInteraction) {
             )
     ];
 
-    await interaction.update({
-        components: components,
-        flags: MessageFlags.IsComponentsV2
-    });
+    // Check if interaction has already been replied to
+    if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+            components: components,
+            flags: MessageFlags.IsComponentsV2,
+            ephemeral: true
+        });
+    } else {
+        await interaction.update({
+            components: components,
+            flags: MessageFlags.IsComponentsV2
+        });
+    }
 }
 
 /**

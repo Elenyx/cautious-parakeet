@@ -10,7 +10,7 @@ export default function DocumentationPage() {
       title="Documentation"
       description="Comprehensive guides, API references, and tutorials to help you get the most out of TicketMesh."
       expectedDate="Q1 2025"
-      contactEmail="docs@ticketmesh.com"
+      contactEmail="docs@ticketmesh.win"
     />
   )
 }
