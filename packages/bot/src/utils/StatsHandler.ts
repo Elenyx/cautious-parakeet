@@ -480,15 +480,15 @@ export class StatsHandler {
         averageResolutionHours: number;
     }> {
         const overview = await this.getTicketOverview(guildId);
-        
-        // Get tickets closed today
+
+        // Count tickets closed today using closed_at window
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const todayTickets = await this.ticketDAO.getTicketsByDateRange(guildId, today, tomorrow);
-        const closedToday = todayTickets.filter(t => t.status === 'closed').length;
+
+        const closedTodayTickets = await this.ticketDAO.getTicketsClosedByDateRange(guildId, today, tomorrow);
+        const closedToday = closedTodayTickets.length;
 
         return {
             totalTickets: overview.total,

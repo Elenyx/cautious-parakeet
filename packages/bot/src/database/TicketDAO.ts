@@ -403,6 +403,25 @@ export class TicketDAO {
         }
     }
 
+	/**
+	 * Get tickets closed within a date range (based on closed_at)
+	 */
+	public async getTicketsClosedByDateRange(guildId: string, startDate: Date, endDate: Date): Promise<Ticket[]> {
+		try {
+			const result = await this.dbManager.query(`
+				SELECT * FROM tickets 
+				WHERE guild_id = $1 AND status = 'closed' AND closed_at IS NOT NULL
+				AND closed_at >= $2 AND closed_at < $3
+				ORDER BY closed_at DESC
+			`, [guildId, startDate.toISOString(), endDate.toISOString()]);
+
+			return result.rows.map((row: TicketRow) => this.mapRowToTicket(row));
+		} catch (error: unknown) {
+			console.error('Error fetching tickets closed by date range:', error);
+			return [];
+		}
+	}
+
     /**
      * Assign a ticket to a user
      */
