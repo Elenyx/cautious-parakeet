@@ -54,7 +54,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const member = await guild.members.fetch(interaction.user.id);
         
         // Check if user has permission to view stats
-        const hasPermission = permissionUtil.isSupportStaff(member) ||
+        const hasPermission = await permissionUtil.isSupportStaff(member) ||
                               permissionUtil.hasAdminPermissions(member);
 
         if (!hasPermission) {
@@ -273,13 +273,13 @@ async function handleUserStats(
 
         if (!userStats) {
             await interaction.editReply({
-                content: `❌ No ticket activity found for ${targetUser.displayName}.`
+                content: `❌ No ticket activity found for ${targetUser.username}.`
             });
             return;
         }
 
         const embed = new EmbedBuilder()
-            .setTitle(`📊 User Statistics - ${targetUser.displayName}`)
+            .setTitle(`📊 User Statistics - ${targetUser.username}`)
             .setThumbnail(targetUser.displayAvatarURL())
             .setColor(0x0099ff)
             .setTimestamp()
