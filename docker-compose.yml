@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: ./packages/bot
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    env_file:
+      - ./packages/bot/.env
+    restart: unless-stopped
+    volumes:
+      - ./packages/bot/src:/app/src
+      - ./packages/bot/package.json:/app/package.json
+    command: pnpm run dev
+
+  client:
+    build:
+      context: ./packages/client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    env_file:
+      - ./packages/client/.env
+    restart: unless-stopped
+    volumes:
+      - ./packages/client:/app
+      - /app/node_modules
+      - /app/.next
+    command: pnpm run dev
+
+  # Optional: Add shared services like Redis, PostgreSQL
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=ticketmesh
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

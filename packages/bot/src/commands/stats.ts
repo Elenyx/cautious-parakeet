@@ -3,11 +3,14 @@ import {
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     EmbedBuilder,
-    AttachmentBuilder
+    AttachmentBuilder,
+    SlashCommandSubcommandBuilder,
+    SlashCommandUserOption
 } from 'discord.js';
 import { StatsHandler } from '../utils/StatsHandler';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
+// Buffer is available globally in Node.js
 
 /**
  * Stats command to display ticket statistics and analytics
@@ -15,31 +18,36 @@ import { ErrorLogger } from '../utils/ErrorLogger';
 export const data = new SlashCommandBuilder()
     .setName('stats')
     .setDescription('View ticket statistics and analytics')
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
         subcommand
             .setName('overview')
             .setDescription('View general ticket statistics overview')
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
         subcommand
             .setName('detailed')
             .setDescription('View detailed ticket statistics')
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
         subcommand
             .setName('export')
             .setDescription('Export statistics to JSON file')
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
         subcommand
             .setName('user')
             .setDescription('View statistics for a specific user')
-            .addUserOption(option =>
+            .addUserOption((option: SlashCommandUserOption) =>
                 option
                     .setName('user')
                     .setDescription('User to view statistics for')
                     .setRequired(true)
             )
+    )
+    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
+        subcommand
+            .setName('realtime')
+            .setDescription('View real-time ticket statistics')
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels);
 
@@ -80,6 +88,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             case 'user':
                 await handleUserStats(interaction, statsHandler);
                 break;
+            case 'realtime':
+                await handleRealtimeStats(interaction, statsHandler);
+                break;
             default:
                 await interaction.reply({
                     content: '❌ Unknown subcommand.',
@@ -119,7 +130,17 @@ async function handleOverview(
     await interaction.deferReply();
 
     try {
-        const quickStats = await statsHandler.getQuickStats(interaction.guildId!);
+        const [quickStats, trendingStats] = await Promise.all([
+            statsHandler.getQuickStats(interaction.guildId!),
+            statsHandler.getTrendingStats(interaction.guildId!, 7)
+        ]);
+        
+        // Format trend indicators
+        const formatTrend = (trend: number) => {
+            if (trend > 0) return `📈 +${trend}%`;
+            if (trend < 0) return `📉 ${trend}%`;
+            return `➡️ 0%`;
+        };
         
         const embed = new EmbedBuilder()
             .setTitle('📊 Quick Statistics Overview')
@@ -158,6 +179,15 @@ async function handleOverview(
                     value: quickStats.openTickets === 0 ? '🟢 All Clear' : 
                            quickStats.openTickets < 5 ? '🟡 Normal' : '🔴 High Load',
                     inline: true
+                },
+                {
+                    name: '📊 7-Day Trends',
+                    value: [
+                        `**Tickets Created:** ${formatTrend(trendingStats.ticketsCreatedTrend)}`,
+                        `**Tickets Closed:** ${formatTrend(trendingStats.ticketsClosedTrend)}`,
+                        `**Resolution Time:** ${formatTrend(trendingStats.resolutionTimeTrend)}`
+                    ].join('\n'),
+                    inline: false
                 }
             )
             .setFooter({ text: 'Use /stats detailed for more comprehensive statistics' });
@@ -342,6 +372,68 @@ async function handleUserStats(
         console.error('Error in user stats:', error);
         await interaction.editReply({
             content: '❌ Failed to retrieve user statistics.'
+        });
+    }
+}
+
+/**
+ * Handle realtime stats subcommand
+ */
+async function handleRealtimeStats(
+    interaction: ChatInputCommandInteraction,
+    statsHandler: StatsHandler
+) {
+    await interaction.deferReply();
+
+    try {
+        const quickStats = await statsHandler.getQuickStats(interaction.guildId!);
+        
+        // Get current time for real-time context
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
+        
+        const embed = new EmbedBuilder()
+            .setTitle('⚡ Real-Time Statistics')
+            .setColor(0x00ff00)
+            .setTimestamp()
+            .addFields(
+                {
+                    name: '🎫 Current Status',
+                    value: [
+                        `**Open Tickets:** ${quickStats.openTickets}`,
+                        `**Closed Today:** ${quickStats.closedToday}`,
+                        `**Total Tickets:** ${quickStats.totalTickets}`
+                    ].join('\n'),
+                    inline: true
+                },
+                {
+                    name: '⏱️ Performance',
+                    value: [
+                        `**Avg Resolution:** ${quickStats.averageResolutionHours}h`,
+                        `**Current Hour:** ${currentHour}:00`,
+                        `**Current Day:** ${currentDay}`
+                    ].join('\n'),
+                    inline: true
+                },
+                {
+                    name: '📊 Status Indicator',
+                    value: quickStats.openTickets === 0 ? '🟢 All Clear - No open tickets' : 
+                           quickStats.openTickets < 5 ? '🟡 Normal Load' : 
+                           quickStats.openTickets < 10 ? '🟠 High Load' : '🔴 Critical Load',
+                    inline: true
+                }
+            )
+            .setFooter({ 
+                text: 'Real-time data • Use /stats detailed for comprehensive analytics' 
+            });
+
+        await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+        console.error('Error in realtime stats:', error);
+        await interaction.editReply({
+            content: '❌ Failed to retrieve real-time statistics.'
         });
     }
 }

@@ -81,12 +81,16 @@ export class StatsHandler {
      */
     async getGuildStatistics(guildId: string, guild?: Guild): Promise<GuildStatistics> {
         try {
-            const overview = await this.getTicketOverview(guildId);
-            const topUsers = await this.getTopUsers(guildId, 10);
-            const recentActivity = await this.getRecentActivity(guildId, 30); // Last 30 days
-            const supportStaffPerformance = await this.getSupportStaffPerformance(guildId);
-            const busyHours = await this.getBusyHours(guildId);
-            const busyDays = await this.getBusyDays(guildId);
+            // Fetch all tickets once and reuse the data
+            const tickets = await this.ticketDAO.getGuildTickets(guildId);
+            
+            // Calculate all statistics from the single dataset
+            const overview = this.calculateTicketOverview(tickets);
+            const topUsers = this.calculateTopUsers(tickets, 10);
+            const recentActivity = await this.getRecentActivity(guildId, 30); // Still needs date range query
+            const supportStaffPerformance = this.calculateSupportStaffPerformance(tickets);
+            const busyHours = this.calculateBusyHours(tickets);
+            const busyDays = this.calculateBusyDays(tickets);
 
             return {
                 guildId,
@@ -114,7 +118,13 @@ export class StatsHandler {
      */
     async getTicketOverview(guildId: string): Promise<TicketStats> {
         const tickets = await this.ticketDAO.getGuildTickets(guildId);
-        
+        return this.calculateTicketOverview(tickets);
+    }
+
+    /**
+     * Calculate ticket overview statistics from ticket data
+     */
+    private calculateTicketOverview(tickets: any[]): TicketStats {
         const stats: TicketStats = {
             total: tickets.length,
             open: 0,
@@ -172,10 +182,15 @@ export class StatsHandler {
      * Get top users by ticket activity
      */
     async getTopUsers(guildId: string, limit: number = 10): Promise<UserStats[]> {
-        const userStatsMap = new Map<string, UserStats>();
-
-        // Get all tickets for the guild
         const tickets = await this.ticketDAO.getGuildTickets(guildId);
+        return this.calculateTopUsers(tickets, limit);
+    }
+
+    /**
+     * Calculate top users by ticket activity from ticket data
+     */
+    private calculateTopUsers(tickets: any[], limit: number = 10): UserStats[] {
+        const userStatsMap = new Map<string, UserStats>();
 
         for (const ticket of tickets) {
             // Track ticket creators
@@ -281,6 +296,13 @@ export class StatsHandler {
      */
     async getSupportStaffPerformance(guildId: string): Promise<UserStats[]> {
         const tickets = await this.ticketDAO.getGuildTickets(guildId);
+        return this.calculateSupportStaffPerformance(tickets);
+    }
+
+    /**
+     * Calculate support staff performance statistics from ticket data
+     */
+    private calculateSupportStaffPerformance(tickets: any[]): UserStats[] {
         const staffStatsMap = new Map<string, UserStats>();
 
         for (const ticket of tickets) {
@@ -320,6 +342,13 @@ export class StatsHandler {
      */
     async getBusyHours(guildId: string): Promise<{ hour: number; count: number }[]> {
         const tickets = await this.ticketDAO.getGuildTickets(guildId);
+        return this.calculateBusyHours(tickets);
+    }
+
+    /**
+     * Calculate busy hours statistics from ticket data
+     */
+    private calculateBusyHours(tickets: any[]): { hour: number; count: number }[] {
         const hourCounts = new Array(24).fill(0);
 
         for (const ticket of tickets) {
@@ -338,6 +367,13 @@ export class StatsHandler {
      */
     async getBusyDays(guildId: string): Promise<{ day: string; count: number }[]> {
         const tickets = await this.ticketDAO.getGuildTickets(guildId);
+        return this.calculateBusyDays(tickets);
+    }
+
+    /**
+     * Calculate busy days statistics from ticket data
+     */
+    private calculateBusyDays(tickets: any[]): { day: string; count: number }[] {
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const dayCounts = new Array(7).fill(0);
 
@@ -495,6 +531,71 @@ export class StatsHandler {
             openTickets: overview.open,
             closedToday,
             averageResolutionHours: Math.round(overview.averageResolutionTime * 10) / 10
+        };
+    }
+
+    /**
+     * Get trending statistics (comparing current period with previous period)
+     */
+    async getTrendingStats(guildId: string, days: number = 7): Promise<{
+        ticketsCreatedTrend: number;
+        ticketsClosedTrend: number;
+        resolutionTimeTrend: number;
+        period: string;
+    }> {
+        const now = new Date();
+        const currentPeriodStart = new Date(now);
+        currentPeriodStart.setDate(now.getDate() - days);
+        
+        const previousPeriodStart = new Date(currentPeriodStart);
+        previousPeriodStart.setDate(currentPeriodStart.getDate() - days);
+        
+        // Get current period data
+        const currentTickets = await this.ticketDAO.getTicketsByDateRange(guildId, currentPeriodStart, now);
+        const currentCreated = currentTickets.length;
+        const currentClosed = currentTickets.filter(t => t.status === 'closed').length;
+        
+        // Calculate current average resolution time
+        let currentResolutionTime = 0;
+        let currentResolvedCount = 0;
+        for (const ticket of currentTickets) {
+            if (ticket.status === 'closed' && ticket.closed_at && ticket.created_at) {
+                const createdTime = new Date(ticket.created_at).getTime();
+                const closedTime = new Date(ticket.closed_at).getTime();
+                currentResolutionTime += (closedTime - createdTime) / (1000 * 60 * 60);
+                currentResolvedCount++;
+            }
+        }
+        const currentAvgResolution = currentResolvedCount > 0 ? currentResolutionTime / currentResolvedCount : 0;
+        
+        // Get previous period data
+        const previousTickets = await this.ticketDAO.getTicketsByDateRange(guildId, previousPeriodStart, currentPeriodStart);
+        const previousCreated = previousTickets.length;
+        const previousClosed = previousTickets.filter(t => t.status === 'closed').length;
+        
+        // Calculate previous average resolution time
+        let previousResolutionTime = 0;
+        let previousResolvedCount = 0;
+        for (const ticket of previousTickets) {
+            if (ticket.status === 'closed' && ticket.closed_at && ticket.created_at) {
+                const createdTime = new Date(ticket.created_at).getTime();
+                const closedTime = new Date(ticket.closed_at).getTime();
+                previousResolutionTime += (closedTime - createdTime) / (1000 * 60 * 60);
+                previousResolvedCount++;
+            }
+        }
+        const previousAvgResolution = previousResolvedCount > 0 ? previousResolutionTime / previousResolvedCount : 0;
+        
+        // Calculate trends (percentage change)
+        const ticketsCreatedTrend = previousCreated > 0 ? ((currentCreated - previousCreated) / previousCreated) * 100 : 0;
+        const ticketsClosedTrend = previousClosed > 0 ? ((currentClosed - previousClosed) / previousClosed) * 100 : 0;
+        const resolutionTimeTrend = previousAvgResolution > 0 ? ((currentAvgResolution - previousAvgResolution) / previousAvgResolution) * 100 : 0;
+        
+        return {
+            ticketsCreatedTrend: Math.round(ticketsCreatedTrend * 10) / 10,
+            ticketsClosedTrend: Math.round(ticketsClosedTrend * 10) / 10,
+            resolutionTimeTrend: Math.round(resolutionTimeTrend * 10) / 10,
+            period: `${days} days`
         };
     }
 }
