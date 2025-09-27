@@ -229,10 +229,12 @@ export class WelcomeMessageBuilder {
                 new TextDisplayBuilder()
                     .setContent(`**${messages.greeting}**\n\n${messages.expectation}`)
             )
-            .setThumbnailAccessory(
-                thumbnail => thumbnail
-                    .setURL('attachment://banner.png')
-                    .setDescription('TicketMesh Banner')
+            .setButtonAccessory(
+                new ButtonBuilder()
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel('👋')
+                    .setCustomId('welcome_greeting')
+                    .setDisabled(true)
             );
 
         // Basic usage section
@@ -240,6 +242,13 @@ export class WelcomeMessageBuilder {
             .addTextDisplayComponents(
                 new TextDisplayBuilder()
                     .setContent(`**Basic Usage:**\n• ${messages.prefix}\n• ${messages.help}\n• ${messages.website}`)
+            )
+            .setButtonAccessory(
+                new ButtonBuilder()
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel('📖')
+                    .setCustomId('welcome_usage')
+                    .setDisabled(true)
             );
 
         // Links section
@@ -247,6 +256,13 @@ export class WelcomeMessageBuilder {
             .addTextDisplayComponents(
                 new TextDisplayBuilder()
                     .setContent(`**${messages.links}:**\n• ${messages.dashboard}\n• ${messages.patreon}\n• ${messages.wiki}\n• ${messages.support}`)
+            )
+            .setButtonAccessory(
+                new ButtonBuilder()
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel('🔗')
+                    .setCustomId('welcome_links')
+                    .setDisabled(true)
             );
 
         // Language selector section
