@@ -1,0 +1,423 @@
+---
+description: Overall project rules and guidelines for TicketMesh development
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# TicketMesh Project Development Rules
+
+## Project Overview
+
+TicketMesh is a modern Discord ticket bot with a web dashboard built using:
+- **Monorepo Architecture**: pnpm workspaces with separate packages
+- **Discord Bot**: TypeScript + discord.js + PostgreSQL
+- **Web Dashboard**: Next.js + React + TypeScript + Tailwind CSS + shadcn/ui
+- **Database**: PostgreSQL with migration system
+- **Infrastructure**: Docker support, Redis caching, HTTP API
+
+## Monorepo Structure
+
+### Package Organization
+```
+packages/
+├── bot/          # Discord bot package
+└── client/       # Next.js web dashboard
+```
+
+### Workspace Configuration
+- Use `pnpm` as package manager (v8.15.0+)
+- Node.js v18+ required
+- All packages managed through root `pnpm-workspace.yaml`
+- Shared dependencies managed at root level
+
+### Package Naming
+- Bot package: `@ticketmesh/bot`
+- Client package: `my-v0-project` (should be `@ticketmesh/client`)
+- Use consistent naming across all packages
+
+## Development Standards
+
+### TypeScript Configuration
+
+#### Bot Package (CommonJS)
+```json
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
+```
+
+#### Client Package (ESNext)
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "preserve"
+  }
+}
+```
+
+### Code Style
+
+#### Naming Conventions
+- **Files**: kebab-case (`setup-wizard.ts`, `user-info.tsx`)
+- **Variables/Functions**: camelCase (`getUserInfo`, `handleSubmit`)
+- **Classes/Interfaces**: PascalCase (`ErrorLogger`, `GuildConfigDAO`)
+- **Constants**: UPPER_CASE (`DISCORD_TOKEN`, `API_SECRET`)
+- **Database Columns**: snake_case (`guild_id`, `created_at`)
+
+#### Import Organization
+```typescript
+// 1. Node.js built-ins
+import path from 'path';
+import process from 'process';
+
+// 2. External libraries
+import { Client, GatewayIntentBits } from 'discord.js';
+import { config } from 'dotenv';
+
+// 3. Internal modules (absolute imports for client)
+import { DatabaseManager } from './database/DatabaseManager.js';
+import { ErrorLogger } from './utils/ErrorLogger.js';
+
+// 4. Relative imports
+import './types/index.js';
+```
+
+### Error Handling
+
+#### Bot Error Handling
+```typescript
+// Use ErrorLogger singleton for all error logging
+const errorLogger = ErrorLogger.getInstance();
+
+try {
+    // Operation
+} catch (error) {
+    await errorLogger.logError(error as Error, {
+        guildId: interaction.guildId!,
+        errorType: 'CommandError',
+        additionalContext: { command: 'command-name' }
+    });
+}
+```
+
+#### Client Error Handling
+```typescript
+// Use try-catch with proper error boundaries
+try {
+    const response = await fetch('/api/endpoint');
+    if (!response.ok) throw new Error('API Error');
+} catch (error) {
+    console.error('Error:', error);
+    // Handle user-facing error
+}
+```
+
+### Database Patterns
+
+#### DAO Pattern
+```typescript
+export class GuildConfigDAO {
+    private static instance: GuildConfigDAO;
+    
+    public static getInstance(): GuildConfigDAO {
+        if (!GuildConfigDAO.instance) {
+            GuildConfigDAO.instance = new GuildConfigDAO();
+        }
+        return GuildConfigDAO.instance;
+    }
+    
+    async getGuildConfig(guildId: string): Promise<GuildConfig | null> {
+        // Implementation
+    }
+}
+```
+
+#### Migration System
+- Use numbered migration files: `001_initial_schema.sql`
+- Include both up and down migrations
+- Use `MigrationManager` for database versioning
+- Test migrations in development before production
+
+### API Design
+
+#### Next.js API Routes
+```typescript
+// app/api/endpoint/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function GET(request: NextRequest) {
+    try {
+        // Implementation
+        return NextResponse.json({ data });
+    } catch (error) {
+        return NextResponse.json(
+            { error: 'Internal Server Error' },
+            { status: 500 }
+        );
+    }
+}
+```
+
+#### Bot HTTP Server
+```typescript
+// server/http.ts
+export async function startHttpServer(client: Client) {
+    // Express-like server for bot dashboard data
+    // Use proper authentication with API_SECRET
+    // Implement rate limiting
+}
+```
+
+## Component Architecture
+
+### React Components (Client)
+
+#### Component Structure
+```typescript
+// components/feature-component.tsx
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+
+interface FeatureComponentProps {
+    title: string;
+    onAction: () => void;
+}
+
+export function FeatureComponent({ title, onAction }: FeatureComponentProps) {
+    const [loading, setLoading] = useState(false);
+    
+    return (
+        <Card>
+            <h2>{title}</h2>
+            <Button onClick={onAction} disabled={loading}>
+                {loading ? 'Loading...' : 'Action'}
+            </Button>
+        </Card>
+    );
+}
+```
+
+#### UI Component Usage
+- Use shadcn/ui components from `@/components/ui/`
+- Extend with custom components in `@/components/`
+- Use Tailwind CSS for styling
+- Implement responsive design with mobile-first approach
+
+### Discord Bot Components
+
+#### Command Structure
+```typescript
+// commands/command-name.ts
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+
+export const data = new SlashCommandBuilder()
+    .setName('command-name')
+    .setDescription('Command description');
+
+export async function execute(interaction: ChatInputCommandInteraction) {
+    // Implementation with proper error handling
+}
+```
+
+#### Event Handlers
+```typescript
+// events/eventName.ts
+import { Events, Client } from 'discord.js';
+
+export const name = Events.EventName;
+export const once = false; // or true for once events
+
+export async function execute(...args: any[], client: Client) {
+    // Implementation
+}
+```
+
+## Environment Configuration
+
+### Environment Variables
+
+#### Bot Package
+```env
+DISCORD_TOKEN=your_discord_bot_token
+DISCORD_CLIENT_ID=your_client_id
+DATABASE_URL=postgresql://user:pass@host:port/db
+API_SECRET=your_api_secret
+PORT=3001
+NODE_ENV=development
+```
+
+#### Client Package
+```env
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+DISCORD_CLIENT_ID=your_client_id
+DISCORD_CLIENT_SECRET=your_client_secret
+```
+
+### Environment Validation
+```typescript
+function validateEnvironment() {
+    const requiredVars = ['DISCORD_TOKEN'];
+    const missingRequired = requiredVars.filter(varName => !process.env[varName]);
+    
+    if (missingRequired.length > 0) {
+        console.error('[ENV] Missing required environment variables:', missingRequired);
+        process.exit(1);
+    }
+}
+```
+
+## Security Guidelines
+
+### Authentication
+- Use `API_SECRET` for bot HTTP server authentication
+- Implement NextAuth.js for client authentication
+- Validate all user inputs
+- Use proper CORS configuration
+
+### Data Protection
+- Sanitize user inputs before database operations
+- Use parameterized queries to prevent SQL injection
+- Implement rate limiting on API endpoints
+- Log security events appropriately
+
+### Discord API
+- Respect Discord rate limits
+- Use proper intent configuration
+- Implement error handling for API failures
+- Cache frequently accessed data
+
+## Performance Optimization
+
+### Bot Performance
+- Use Redis for caching frequently accessed data
+- Implement connection pooling for database
+- Use singleton pattern for utility classes
+- Optimize Discord API calls with batching
+
+### Client Performance
+- Use Next.js Image component for images
+- Implement proper loading states
+- Use React.memo for expensive components
+- Optimize bundle size with dynamic imports
+
+## Testing Strategy
+
+### Unit Testing
+- Test individual functions and methods
+- Mock external dependencies
+- Test error scenarios
+- Maintain high test coverage
+
+### Integration Testing
+- Test API endpoints
+- Test database operations
+- Test Discord bot interactions
+- Test component integration
+
+### End-to-End Testing
+- Test complete user workflows
+- Test bot command execution
+- Test dashboard functionality
+- Test error handling paths
+
+## Deployment
+
+### Docker Configuration
+- Use multi-stage builds for optimization
+- Separate development and production configs
+- Use docker-compose for local development
+- Implement health checks
+
+### Production Considerations
+- Use environment-specific configurations
+- Implement proper logging
+- Set up monitoring and alerting
+- Use database migrations for schema changes
+
+## Documentation
+
+### Code Documentation
+- Use JSDoc for all exported functions
+- Document complex business logic
+- Include parameter and return type descriptions
+- Document error conditions
+
+### API Documentation
+- Document all API endpoints
+- Include request/response examples
+- Document authentication requirements
+- Include error response formats
+
+### README Files
+- Maintain up-to-date README files
+- Include setup instructions
+- Document environment variables
+- Include troubleshooting guides
+
+## Git Workflow
+
+### Branch Naming
+- `feature/feature-name` for new features
+- `bugfix/bug-description` for bug fixes
+- `hotfix/critical-fix` for urgent fixes
+- `refactor/component-name` for refactoring
+
+### Commit Messages
+- Use conventional commit format
+- Include scope when applicable
+- Be descriptive but concise
+- Reference issues when relevant
+
+### Pull Requests
+- Include detailed description
+- Reference related issues
+- Include testing instructions
+- Request appropriate reviewers
+
+## Monitoring and Logging
+
+### Logging Standards
+- Use structured logging with consistent format
+- Include relevant context (guild ID, user ID, etc.)
+- Log both success and error cases
+- Use appropriate log levels
+
+### Error Monitoring
+- Implement comprehensive error tracking
+- Send critical errors to Discord channels
+- Monitor bot uptime and performance
+- Track user engagement metrics
+
+## Maintenance
+
+### Dependency Management
+- Keep dependencies up to date
+- Use `pnpm audit` to check for vulnerabilities
+- Test updates in development first
+- Document breaking changes
+
+### Code Quality
+- Use ESLint and Prettier for code formatting
+- Implement pre-commit hooks
+- Regular code reviews
+- Refactor legacy code when possible
+
+### Database Maintenance
+- Regular backup procedures
+- Monitor database performance
+- Clean up old data periodically
+- Optimize slow queries

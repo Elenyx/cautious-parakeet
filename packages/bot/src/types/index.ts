@@ -36,6 +36,7 @@ export interface GuildConfig {
     cleanup_after_hours?: number;
     auto_close_inactive?: boolean;
     inactive_hours?: number;
+    language?: string;
     created_at?: string;
     updated_at?: string;
 }

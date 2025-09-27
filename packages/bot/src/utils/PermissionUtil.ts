@@ -66,6 +66,50 @@ export class PermissionUtil {
     }
 
     /**
+     * Check if a member is support staff ONLY (excludes administrators)
+     */
+    public async isSupportStaffOnly(member: GuildMember): Promise<boolean> {
+        const guildConfig = await this.guildConfigDAO.getGuildConfig(member.guild.id);
+        if (!guildConfig?.support_role_ids) return false;
+
+        const supportRoleIds = guildConfig.support_role_ids;
+        return member.roles.cache.some(role => supportRoleIds.includes(role.id)) &&
+               !this.hasAdminPermissions(member);
+    }
+
+    /**
+     * Check if a member has support staff permissions (support staff OR administrator)
+     */
+    public async hasSupportStaffPermissions(member: GuildMember): Promise<boolean> {
+        return await this.isSupportStaff(member);
+    }
+
+    /**
+     * Get all support staff members in a guild
+     */
+    public async getSupportStaffMembers(guild: Guild): Promise<GuildMember[]> {
+        const guildConfig = await this.guildConfigDAO.getGuildConfig(guild.id);
+        if (!guildConfig?.support_role_ids) return [];
+
+        const supportRoleIds = guildConfig.support_role_ids;
+        const members = await guild.members.fetch();
+        
+        return Array.from(members.filter(member => 
+            member.roles.cache.some(role => supportRoleIds.includes(role.id))
+        ).values());
+    }
+
+    /**
+     * Check if a role is configured as a support role
+     */
+    public async isSupportRole(roleId: string, guildId: string): Promise<boolean> {
+        const guildConfig = await this.guildConfigDAO.getGuildConfig(guildId);
+        if (!guildConfig?.support_role_ids) return false;
+        
+        return guildConfig.support_role_ids.includes(roleId);
+    }
+
+    /**
      * Check if bot has required permissions in a guild
      */
     public async checkBotPermissions(guild: Guild): Promise<{

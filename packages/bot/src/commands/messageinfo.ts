@@ -15,7 +15,7 @@ import { PermissionUtil } from '../utils/PermissionUtil';
  * to view detailed information about the message
  */
 export const data = new ContextMenuCommandBuilder()
-    .setName('Message Info')
+    .setName('Message Info (Support Staff)')
     .setType(ApplicationCommandType.Message)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
 
@@ -29,7 +29,7 @@ export async function execute(interaction: MessageContextMenuCommandInteraction)
         const member = await guild.members.fetch(interaction.user.id);
         
         const hasPermission = permissionUtil.hasAdminPermissions(member) ||
-                             permissionUtil.isSupportStaff(member) ||
+                             await permissionUtil.hasSupportStaffPermissions(member) ||
                              member.permissions.has(PermissionFlagsBits.ManageMessages);
 
         if (!hasPermission) {

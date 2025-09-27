@@ -17,7 +17,7 @@ import { ErrorLogger } from '../utils/ErrorLogger';
  */
 export const data = new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('View ticket statistics and analytics')
+    .setDescription('View ticket statistics and analytics (Support Staff only)')
     .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
         subcommand
             .setName('overview')
@@ -62,8 +62,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const member = await guild.members.fetch(interaction.user.id);
         
         // Check if user has permission to view stats
-        const hasPermission = permissionUtil.isSupportStaff(member) ||
-                              permissionUtil.hasAdminPermissions(member);
+        const hasPermission = await permissionUtil.hasSupportStaffPermissions(member);
 
         if (!hasPermission) {
             await interaction.reply({
@@ -83,9 +82,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 await handleDetailed(interaction, statsHandler);
                 break;
             case 'export':
+                // Export requires Administrator permissions
+                if (!permissionUtil.hasAdminPermissions(member)) {
+                    await interaction.reply({
+                        content: '❌ You need Administrator permissions to export statistics.',
+                        ephemeral: true
+                    });
+                    return;
+                }
                 await handleExport(interaction, statsHandler);
                 break;
             case 'user':
+                // User stats require Administrator permissions
+                if (!permissionUtil.hasAdminPermissions(member)) {
+                    await interaction.reply({
+                        content: '❌ You need Administrator permissions to view individual user statistics.',
+                        ephemeral: true
+                    });
+                    return;
+                }
                 await handleUserStats(interaction, statsHandler);
                 break;
             case 'realtime':

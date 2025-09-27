@@ -18,6 +18,7 @@ interface PostgreSQLGuildConfigRow {
     cleanup_logs_days?: number;
     auto_close_inactive: boolean;
     inactive_hours: number;
+    language?: string;
     created_at?: string;
     updated_at?: string;
 }
@@ -70,8 +71,8 @@ export class GuildConfigDAO {
                     guild_id, category_id, panel_channel_id, transcript_channel,
                     error_log_channel_id, support_role_ids, ticket_counter,
                     cleanup_enabled, cleanup_after_hours, auto_close_inactive,
-                    inactive_hours
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    inactive_hours, language
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 ON CONFLICT(guild_id) DO UPDATE SET
                     category_id = COALESCE(EXCLUDED.category_id, guild_configs.category_id),
                     panel_channel_id = COALESCE(EXCLUDED.panel_channel_id, guild_configs.panel_channel_id),
@@ -86,6 +87,7 @@ export class GuildConfigDAO {
                     cleanup_after_hours = COALESCE(EXCLUDED.cleanup_after_hours, guild_configs.cleanup_after_hours),
                     auto_close_inactive = COALESCE(EXCLUDED.auto_close_inactive, guild_configs.auto_close_inactive),
                     inactive_hours = COALESCE(EXCLUDED.inactive_hours, guild_configs.inactive_hours),
+                    language = COALESCE(EXCLUDED.language, guild_configs.language),
                     updated_at = CURRENT_TIMESTAMP
                 RETURNING *
             `, [
@@ -99,7 +101,8 @@ export class GuildConfigDAO {
                 config.cleanup_enabled || false,
                 config.cleanup_after_hours || 24,
                 config.auto_close_inactive || false,
-                config.inactive_hours || 72
+                config.inactive_hours || 72,
+                config.language || 'en'
             ]);
 
             return this.mapRowToConfig(result.rows[0]);
@@ -226,6 +229,7 @@ export class GuildConfigDAO {
             cleanup_after_hours: row.cleanup_after_hours,
             auto_close_inactive: row.auto_close_inactive,
             inactive_hours: row.inactive_hours,
+            language: row.language || 'en',
             created_at: row.created_at,
             updated_at: row.updated_at
         };

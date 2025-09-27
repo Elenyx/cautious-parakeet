@@ -3,6 +3,7 @@ import { TicketHandler } from "../components/ticketHandler.js";
 import { ErrorLogger } from "../utils/ErrorLogger.js";
 import { handleSetupWizardInteraction } from "../handlers/setupWizardHandler.js";
 import { handleHelpButtonInteraction } from "../handlers/helpButtonHandler.js";
+import { handleLanguageSelector } from "../commands/language.js";
 
 export const name = Events.InteractionCreate;
 
@@ -89,6 +90,15 @@ export async function execute(interaction: Interaction, client: Client) {
 
         // Handle button interactions
         if (interaction.isButton()) {
+            // Handle language selector button
+            if (interaction.customId.startsWith('language_select_')) {
+                const welcomeBuilder = new (await import('../utils/WelcomeMessageBuilder.js')).WelcomeMessageBuilder('en', interaction.guildId!);
+                const languageSelector = welcomeBuilder.buildLanguageSelector();
+                
+                await interaction.reply(languageSelector);
+                return;
+            }
+
             // Handle help button interactions
             if (await handleHelpButtonInteraction(interaction, client)) {
                 return;
@@ -110,6 +120,12 @@ export async function execute(interaction: Interaction, client: Client) {
 
         // Handle select menu interactions
         if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu() || interaction.isRoleSelectMenu()) {
+            // Handle language selector interactions
+            if (interaction.isStringSelectMenu() && interaction.customId.startsWith('language_change_')) {
+                await handleLanguageSelector(interaction);
+                return;
+            }
+
             // Handle setup wizard interactions
             if (await handleSetupWizardInteraction(interaction)) {
                 return;

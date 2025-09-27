@@ -1,0 +1,238 @@
+---
+description: Rules for Discord bot command development in TicketMesh
+globs: ["packages/bot/src/commands/**/*.ts"]
+alwaysApply: true
+---
+
+# Discord Bot Command Development Rules
+
+## Command Structure
+
+### File Organization
+- All commands must be placed in `packages/bot/src/commands/`
+- Use kebab-case for file names (e.g., `setup-wizard.ts`, `support-roles.ts`)
+- Each command file should export `data` and `execute` functions
+
+### Command Definition
+```typescript
+export const data = new SlashCommandBuilder()
+    .setName('command-name')
+    .setDescription('Clear description of what the command does')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) // When needed
+    .addSubcommand(subcommand => 
+        subcommand
+            .setName('subcommand-name')
+            .setDescription('Subcommand description')
+    );
+```
+
+### Command Execution
+```typescript
+export async function execute(interaction: ChatInputCommandInteraction) {
+    const errorLogger = ErrorLogger.getInstance();
+    
+    try {
+        // Command logic here
+    } catch (error) {
+        console.error('Error in command:', error);
+        await errorLogger.logError(error as Error, {
+            guildId: interaction.guildId!,
+            errorType: 'CommandError',
+            additionalContext: { command: 'command-name' }
+        });
+        
+        // Handle error response
+    }
+}
+```
+
+## Permission Requirements
+
+### Administrator Commands
+- Use `PermissionFlagsBits.Administrator` for system configuration commands
+- Examples: `/setup-wizard`, `/support-roles`, `/debug`
+
+### Support Staff Commands
+- Use `PermissionFlagsBits.ManageChannels` or `PermissionFlagsBits.ManageMessages`
+- Check support staff permissions using `PermissionUtil.hasSupportStaffPermissions()`
+- Examples: `/stats`, `/userinfo`, `/messageinfo`
+
+### Public Commands
+- No special permissions required
+- Examples: `/help`
+
+## Error Handling
+
+### Required Error Handling
+- Always wrap command logic in try-catch blocks
+- Use `ErrorLogger.getInstance()` for consistent error logging
+- Provide user-friendly error messages
+- Check if interaction has already been replied to before responding
+
+### Error Response Pattern
+```typescript
+if (interaction.replied || interaction.deferred) {
+    await interaction.followUp({ content: errorMessage, ephemeral: true });
+} else {
+    await interaction.reply({ content: errorMessage, ephemeral: true });
+}
+```
+
+## Response Patterns
+
+### Deferred Replies
+- Use `interaction.deferReply()` for commands that take time to process
+- Use `interaction.deferReply({ ephemeral: true })` for admin-only responses
+- Always check if already replied before deferring
+
+### Embed Usage
+- Use `EmbedBuilder` for rich responses
+- Include timestamps with `.setTimestamp()`
+- Use appropriate colors (0x0099ff for info, 0x00ff00 for success, 0xff0000 for errors)
+- Add footers with relevant context
+
+### Ephemeral Responses
+- Use ephemeral: true for admin commands and sensitive information
+- Use ephemeral: false for public information that should be visible to all
+
+## Database Integration
+
+### DAO Usage
+- Use appropriate DAO classes (e.g., `GuildConfigDAO`, `TicketDAO`)
+- Always handle database errors gracefully
+- Validate data before database operations
+
+### Configuration Access
+```typescript
+const guildConfigDAO = new GuildConfigDAO();
+const config = await guildConfigDAO.getGuildConfig(guildId);
+```
+
+## Subcommand Handling
+
+### Switch Statement Pattern
+```typescript
+const subcommand = interaction.options.getSubcommand();
+
+switch (subcommand) {
+    case 'subcommand1':
+        await handleSubcommand1(interaction);
+        break;
+    case 'subcommand2':
+        await handleSubcommand2(interaction);
+        break;
+    default:
+        await interaction.reply({
+            content: '❌ Unknown subcommand.',
+            ephemeral: true
+        });
+}
+```
+
+### Handler Functions
+- Create separate handler functions for each subcommand
+- Use descriptive function names (e.g., `handleList`, `handleAdd`, `handleRemove`)
+- Pass required dependencies as parameters
+
+## Context Menu Commands
+
+### User Context Menu
+```typescript
+export const data = new ContextMenuCommandBuilder()
+    .setName('User Info (Support Staff)')
+    .setType(ApplicationCommandType.User)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
+```
+
+### Message Context Menu
+```typescript
+export const data = new ContextMenuCommandBuilder()
+    .setName('Message Info (Support Staff)')
+    .setType(ApplicationCommandType.Message)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
+```
+
+## Component Integration
+
+### Buttons and Select Menus
+- Use `ActionRowBuilder` for component organization
+- Implement proper button interaction handling
+- Use appropriate button styles (Primary, Secondary, Success, Danger)
+
+### Components V2 (New Discord Features)
+- Use `ContainerBuilder`, `TextDisplayBuilder`, `SectionBuilder` for modern UI
+- Set `MessageFlags.IsComponentsV2` for new component types
+- Use `SeparatorBuilder` for visual organization
+
+## Validation and Security
+
+### Input Validation
+- Validate all user inputs before processing
+- Check for required permissions before executing commands
+- Sanitize user input to prevent injection attacks
+
+### Permission Checks
+```typescript
+// Check admin permissions
+if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+    await interaction.reply({
+        content: '❌ You need Administrator permissions to use this command.',
+        ephemeral: true
+    });
+    return;
+}
+
+// Check support staff permissions
+const hasPermission = await permissionUtil.hasSupportStaffPermissions(member);
+if (!hasPermission) {
+    await interaction.reply({
+        content: '❌ You need support staff permissions to use this command.',
+        ephemeral: true
+    });
+    return;
+}
+```
+
+## Logging and Monitoring
+
+### Console Logging
+- Use descriptive console.log messages for debugging
+- Include relevant context (guild ID, user ID, command name)
+- Use consistent log format: `[COMMAND] Action: details`
+
+### Error Logging
+- Use `ErrorLogger.getInstance()` for all error logging
+- Include comprehensive context in error logs
+- Log both user-facing and internal errors
+
+## Code Style
+
+### TypeScript Best Practices
+- Use proper type annotations
+- Import types from discord.js
+- Use optional chaining and nullish coalescing where appropriate
+
+### Naming Conventions
+- Use camelCase for variables and functions
+- Use PascalCase for classes and interfaces
+- Use UPPER_CASE for constants
+- Use descriptive names that explain purpose
+
+### Documentation
+- Add JSDoc comments for all exported functions
+- Include parameter descriptions and return types
+- Document complex logic and business rules
+
+## Testing Considerations
+
+### Command Testing
+- Test all subcommands and options
+- Test permission requirements
+- Test error scenarios
+- Test with various guild configurations
+
+### Integration Testing
+- Test database interactions
+- Test component interactions
+- Test error handling paths
+- Test with different user roles and permissions

@@ -149,6 +149,7 @@ export class HelpEmbedBuilder {
                 name: '🔧 Setup & Configuration',
                 value: [
                     '`/setup-wizard` - Interactive setup wizard (Admin only)',
+                    '`/support-roles` - Manage support staff roles (Admin only)',
                     '`/debug config` - Check current configuration',
                     '`/debug transcript` - Test transcript generation'
                 ].join('\n'),
@@ -329,7 +330,8 @@ export class HelpEmbedBuilder {
                 value: [
                     '• Access to `/setup-wizard`',
                     '• Can use `/debug` commands',
-                    '• Full access to `/stats`',
+                    '• Full access to `/stats` (including export and user stats)',
+                    '• Can manage support staff roles with `/support-roles`',
                     '• Can modify system configuration'
                 ].join('\n'),
                 inline: false
@@ -338,9 +340,10 @@ export class HelpEmbedBuilder {
                 name: '🛠️ Support Staff Roles',
                 value: [
                     '• Access to ticket channels',
-                    '• Can view ticket statistics',
+                    '• Can view general ticket statistics (`/stats overview`, `/stats detailed`, `/stats realtime`)',
                     '• Can close and manage tickets',
-                    '• Configured during setup wizard'
+                    '• Can view user and message information',
+                    '• Configured with `/support-roles` command'
                 ].join('\n'),
                 inline: false
             },

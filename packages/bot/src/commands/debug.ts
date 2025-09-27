@@ -13,7 +13,7 @@ import { ErrorLogger } from '../utils/ErrorLogger';
  */
 export const data = new SlashCommandBuilder()
     .setName('debug')
-    .setDescription('Debug and test ticket system functionality')
+    .setDescription('Debug and test ticket system functionality (Administrator only)')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(subcommand =>
         subcommand
