@@ -121,9 +121,20 @@ async function handleSetLanguage(interaction: ChatInputCommandInteraction, guild
 
     const languageInfo = SUPPORTED_LANGUAGES[language];
     
+    // Send confirmation message
     await interaction.reply({
         content: `✅ Bot language has been set to ${languageInfo.flag} **${languageInfo.name}** for this server.`,
         ephemeral: true
+    });
+
+    // Send new welcome message in the selected language
+    const welcomeBuilder = new WelcomeMessageBuilder(language, interaction.guildId!);
+    const welcomeMessage = welcomeBuilder.build();
+    
+    // Send the welcome message to the channel (not ephemeral)
+    await interaction.followUp({
+        ...welcomeMessage,
+        ephemeral: false
     });
 }
 
@@ -188,9 +199,20 @@ export async function handleLanguageSelector(interaction: StringSelectMenuIntera
 
         const languageInfo = SUPPORTED_LANGUAGES[selectedLanguage];
         
+        // Send confirmation message
         await interaction.reply({
             content: `✅ Bot language has been changed to ${languageInfo.flag} **${languageInfo.name}**!`,
             ephemeral: true
+        });
+
+        // Send new welcome message in the selected language
+        const welcomeBuilder = new WelcomeMessageBuilder(selectedLanguage, interaction.guildId);
+        const welcomeMessage = welcomeBuilder.build();
+        
+        // Send the welcome message to the channel (not ephemeral)
+        await interaction.followUp({
+            ...welcomeMessage,
+            ephemeral: false
         });
         
     } catch (error) {

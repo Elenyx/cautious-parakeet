@@ -35,164 +35,164 @@ export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
  */
 const WELCOME_MESSAGES = {
     en: {
-        greeting: "Thank you very much for adding me to such a wonderful server! 😻",
-        expectation: "I hope to meet your expectations and help you on your server! 💖",
-        prefix: "My default prefix is ! or /",
-        help: "You can see all my commands with !help or /help",
-        website: "You can also see my list of commands on the website.",
-        links: "Links of interest",
-        dashboard: "You can configure me with my Dashboard.",
-        patreon: "You can unlock cool things on my Patreon!",
-        wiki: "If you need a guide, I have a wiki",
-        support: "Do you need help? You can join my support server.",
+        greeting: "Welcome to TicketMesh! 🎫",
+        expectation: "I'm your advanced Discord ticket system designed to streamline your server's support workflow!",
+        features: "**Key Features:**\n• Interactive Setup Wizard\n• Multi-Category Tickets\n• Advanced Analytics\n• Auto-Transcripts\n• Support Role Management",
+        quickStart: "**Quick Start:**\n• Use `/setup-wizard` to configure your ticket system\n• Set up ticket categories and permissions\n• Monitor with `/stats` command",
+        help: "Use `/help` to explore all features and commands",
+        links: "Resources & Support",
+        dashboard: "Configure your ticket system with our web dashboard",
+        github: "View source code and contribute on GitHub",
+        wiki: "Comprehensive guides and documentation",
+        support: "Join our support server for help and updates",
         language: "Do you want to change the language?",
         languageCommand: "You can change the language of the bot using the command `/language set.`",
         viewLanguages: "View this in other languages",
-        description: "I am a ticket bot, support system, utilities and much more."
+        description: "Advanced Discord ticket system with analytics and multi-language support."
     },
     es: {
-        greeting: "¡Muchas gracias por agregarme a un servidor tan maravilloso! 😻",
-        expectation: "¡Espero cumplir con tus expectativas y ayudarte en tu servidor! 💖",
-        prefix: "Mi prefijo por defecto es ! o /",
-        help: "Puedes ver todos mis comandos con !help o /help",
-        website: "También puedes ver mi lista de comandos en el sitio web.",
-        links: "Enlaces de interés",
-        dashboard: "Puedes configurarme con mi Dashboard.",
-        patreon: "¡Puedes desbloquear cosas geniales en mi Patreon!",
-        wiki: "Si necesitas una guía, tengo una wiki",
-        support: "¿Necesitas ayuda? Puedes unirte a mi servidor de soporte.",
+        greeting: "¡Bienvenido a TicketMesh! 🎫",
+        expectation: "¡Soy tu sistema avanzado de tickets para Discord diseñado para optimizar el flujo de soporte de tu servidor!",
+        features: "**Características Principales:**\n• Asistente de Configuración Interactivo\n• Tickets Multi-Categoría\n• Análisis Avanzados\n• Transcripciones Automáticas\n• Gestión de Roles de Soporte",
+        quickStart: "**Inicio Rápido:**\n• Usa `/setup-wizard` para configurar tu sistema de tickets\n• Configura categorías de tickets y permisos\n• Monitorea con el comando `/stats`",
+        help: "Usa `/help` para explorar todas las características y comandos",
+        links: "Recursos y Soporte",
+        dashboard: "Configura tu sistema de tickets con nuestro panel web",
+        github: "Ver código fuente y contribuir en GitHub",
+        wiki: "Guías completas y documentación",
+        support: "Únete a nuestro servidor de soporte para ayuda y actualizaciones",
         language: "¿Quieres cambiar el idioma?",
         languageCommand: "Puedes cambiar el idioma del bot usando el comando `/language set.`",
         viewLanguages: "Ver esto en otros idiomas",
-        description: "Soy un bot de tickets, sistema de soporte, utilidades y mucho más."
+        description: "Sistema avanzado de tickets para Discord con análisis y soporte multi-idioma."
     },
     fr: {
-        greeting: "Merci beaucoup de m'avoir ajouté à un serveur si merveilleux ! 😻",
-        expectation: "J'espère répondre à vos attentes et vous aider sur votre serveur ! 💖",
-        prefix: "Mon préfixe par défaut est ! ou /",
-        help: "Vous pouvez voir toutes mes commandes avec !help ou /help",
-        website: "Vous pouvez également voir ma liste de commandes sur le site web.",
-        links: "Liens d'intérêt",
-        dashboard: "Vous pouvez me configurer avec mon Dashboard.",
-        patreon: "Vous pouvez débloquer des choses cool sur mon Patreon !",
-        wiki: "Si vous avez besoin d'un guide, j'ai un wiki",
-        support: "Vous avez besoin d'aide ? Vous pouvez rejoindre mon serveur de support.",
+        greeting: "Bienvenue sur TicketMesh ! 🎫",
+        expectation: "Je suis votre système de tickets Discord avancé conçu pour rationaliser le flux de support de votre serveur !",
+        features: "**Fonctionnalités Clés :**\n• Assistant de Configuration Interactif\n• Tickets Multi-Catégories\n• Analyses Avancées\n• Transcripts Automatiques\n• Gestion des Rôles de Support",
+        quickStart: "**Démarrage Rapide :**\n• Utilisez `/setup-wizard` pour configurer votre système de tickets\n• Configurez les catégories de tickets et les permissions\n• Surveillez avec la commande `/stats`",
+        help: "Utilisez `/help` pour explorer toutes les fonctionnalités et commandes",
+        links: "Ressources et Support",
+        dashboard: "Configurez votre système de tickets avec notre tableau de bord web",
+        github: "Voir le code source et contribuer sur GitHub",
+        wiki: "Guides complets et documentation",
+        support: "Rejoignez notre serveur de support pour l'aide et les mises à jour",
         language: "Voulez-vous changer la langue ?",
         languageCommand: "Vous pouvez changer la langue du bot en utilisant la commande `/language set.`",
         viewLanguages: "Voir ceci dans d'autres langues",
-        description: "Je suis un bot de tickets, système de support, utilitaires et bien plus encore."
+        description: "Système de tickets Discord avancé avec analyses et support multi-langues."
     },
     de: {
-        greeting: "Vielen Dank, dass Sie mich zu einem so wunderbaren Server hinzugefügt haben! 😻",
-        expectation: "Ich hoffe, Ihre Erwartungen zu erfüllen und Ihnen auf Ihrem Server zu helfen! 💖",
-        prefix: "Mein Standard-Präfix ist ! oder /",
-        help: "Sie können alle meine Befehle mit !help oder /help sehen",
-        website: "Sie können auch meine Befehlsliste auf der Website sehen.",
-        links: "Interessante Links",
-        dashboard: "Sie können mich mit meinem Dashboard konfigurieren.",
-        patreon: "Sie können coole Sachen auf meinem Patreon freischalten!",
-        wiki: "Wenn Sie eine Anleitung benötigen, habe ich ein Wiki",
-        support: "Brauchen Sie Hilfe? Sie können meinem Support-Server beitreten.",
+        greeting: "Willkommen bei TicketMesh! 🎫",
+        expectation: "Ich bin Ihr fortschrittliches Discord-Ticket-System, das darauf ausgelegt ist, Ihren Server-Support-Workflow zu optimieren!",
+        features: "**Hauptfunktionen:**\n• Interaktiver Setup-Assistent\n• Multi-Kategorie-Tickets\n• Erweiterte Analysen\n• Automatische Transkripte\n• Support-Rollen-Verwaltung",
+        quickStart: "**Schnellstart:**\n• Verwenden Sie `/setup-wizard`, um Ihr Ticket-System zu konfigurieren\n• Richten Sie Ticket-Kategorien und Berechtigungen ein\n• Überwachen Sie mit dem `/stats`-Befehl",
+        help: "Verwenden Sie `/help`, um alle Funktionen und Befehle zu erkunden",
+        links: "Ressourcen & Support",
+        dashboard: "Konfigurieren Sie Ihr Ticket-System mit unserem Web-Dashboard",
+        github: "Quellcode anzeigen und auf GitHub beitragen",
+        wiki: "Umfassende Anleitungen und Dokumentation",
+        support: "Treten Sie unserem Support-Server für Hilfe und Updates bei",
         language: "Möchten Sie die Sprache ändern?",
         languageCommand: "Sie können die Sprache des Bots mit dem Befehl `/language set.` ändern.",
         viewLanguages: "Dies in anderen Sprachen anzeigen",
-        description: "Ich bin ein Ticket-Bot, Support-System, Utilities und vieles mehr."
+        description: "Fortschrittliches Discord-Ticket-System mit Analysen und mehrsprachiger Unterstützung."
     },
     it: {
-        greeting: "Grazie mille per avermi aggiunto a un server così meraviglioso! 😻",
-        expectation: "Spero di soddisfare le tue aspettative e aiutarti nel tuo server! 💖",
-        prefix: "Il mio prefisso predefinito è ! o /",
-        help: "Puoi vedere tutti i miei comandi con !help o /help",
-        website: "Puoi anche vedere la mia lista di comandi sul sito web.",
-        links: "Link di interesse",
-        dashboard: "Puoi configurarmi con la mia Dashboard.",
-        patreon: "Puoi sbloccare cose fantastiche sul mio Patreon!",
-        wiki: "Se hai bisogno di una guida, ho una wiki",
-        support: "Hai bisogno di aiuto? Puoi unirti al mio server di supporto.",
+        greeting: "Benvenuto su TicketMesh! 🎫",
+        expectation: "Sono il tuo sistema di ticket Discord avanzato progettato per semplificare il flusso di supporto del tuo server!",
+        features: "**Caratteristiche Principali:**\n• Assistente di Configurazione Interattivo\n• Ticket Multi-Categoria\n• Analisi Avanzate\n• Trascrizioni Automatiche\n• Gestione Ruoli di Supporto",
+        quickStart: "**Avvio Rapido:**\n• Usa `/setup-wizard` per configurare il tuo sistema di ticket\n• Imposta categorie di ticket e permessi\n• Monitora con il comando `/stats`",
+        help: "Usa `/help` per esplorare tutte le caratteristiche e i comandi",
+        links: "Risorse e Supporto",
+        dashboard: "Configura il tuo sistema di ticket con la nostra dashboard web",
+        github: "Visualizza il codice sorgente e contribuisci su GitHub",
+        wiki: "Guide complete e documentazione",
+        support: "Unisciti al nostro server di supporto per aiuto e aggiornamenti",
         language: "Vuoi cambiare la lingua?",
         languageCommand: "Puoi cambiare la lingua del bot usando il comando `/language set.`",
         viewLanguages: "Visualizza questo in altre lingue",
-        description: "Sono un bot di ticket, sistema di supporto, utilità e molto altro."
+        description: "Sistema di ticket Discord avanzato con analisi e supporto multi-lingua."
     },
     pt: {
-        greeting: "Muito obrigado por me adicionar a um servidor tão maravilhoso! 😻",
-        expectation: "Espero atender às suas expectativas e ajudá-lo no seu servidor! 💖",
-        prefix: "Meu prefixo padrão é ! ou /",
-        help: "Você pode ver todos os meus comandos com !help ou /help",
-        website: "Você também pode ver minha lista de comandos no site.",
-        links: "Links de interesse",
-        dashboard: "Você pode me configurar com meu Dashboard.",
-        patreon: "Você pode desbloquear coisas legais no meu Patreon!",
-        wiki: "Se você precisar de um guia, tenho uma wiki",
-        support: "Precisa de ajuda? Você pode se juntar ao meu servidor de suporte.",
+        greeting: "Bem-vindo ao TicketMesh! 🎫",
+        expectation: "Sou seu sistema avançado de tickets para Discord projetado para otimizar o fluxo de suporte do seu servidor!",
+        features: "**Características Principais:**\n• Assistente de Configuração Interativo\n• Tickets Multi-Categoria\n• Análises Avançadas\n• Transcrições Automáticas\n• Gestão de Funções de Suporte",
+        quickStart: "**Início Rápido:**\n• Use `/setup-wizard` para configurar seu sistema de tickets\n• Configure categorias de tickets e permissões\n• Monitore com o comando `/stats`",
+        help: "Use `/help` para explorar todas as características e comandos",
+        links: "Recursos e Suporte",
+        dashboard: "Configure seu sistema de tickets com nosso painel web",
+        github: "Ver código fonte e contribuir no GitHub",
+        wiki: "Guias completos e documentação",
+        support: "Junte-se ao nosso servidor de suporte para ajuda e atualizações",
         language: "Quer mudar o idioma?",
         languageCommand: "Você pode mudar o idioma do bot usando o comando `/language set.`",
         viewLanguages: "Ver isso em outros idiomas",
-        description: "Sou um bot de tickets, sistema de suporte, utilitários e muito mais."
+        description: "Sistema avançado de tickets para Discord com análises e suporte multi-idioma."
     },
     ru: {
-        greeting: "Большое спасибо за добавление меня на такой замечательный сервер! 😻",
-        expectation: "Надеюсь оправдать ваши ожидания и помочь вам на вашем сервере! 💖",
-        prefix: "Мой префикс по умолчанию ! или /",
-        help: "Вы можете увидеть все мои команды с !help или /help",
-        website: "Вы также можете увидеть мой список команд на веб-сайте.",
-        links: "Интересные ссылки",
-        dashboard: "Вы можете настроить меня с помощью моей панели управления.",
-        patreon: "Вы можете разблокировать крутые вещи на моем Patreon!",
-        wiki: "Если вам нужен гид, у меня есть вики",
-        support: "Нужна помощь? Вы можете присоединиться к моему серверу поддержки.",
+        greeting: "Добро пожаловать в TicketMesh! 🎫",
+        expectation: "Я ваш продвинутый Discord-бот для тикетов, созданный для оптимизации рабочего процесса поддержки вашего сервера!",
+        features: "**Основные функции:**\n• Интерактивный мастер настройки\n• Тикеты с несколькими категориями\n• Расширенная аналитика\n• Автоматические транскрипты\n• Управление ролями поддержки",
+        quickStart: "**Быстрый старт:**\n• Используйте `/setup-wizard` для настройки системы тикетов\n• Настройте категории тикетов и разрешения\n• Отслеживайте с помощью команды `/stats`",
+        help: "Используйте `/help` для изучения всех функций и команд",
+        links: "Ресурсы и поддержка",
+        dashboard: "Настройте систему тикетов с помощью нашей веб-панели",
+        github: "Просмотр исходного кода и участие в GitHub",
+        wiki: "Подробные руководства и документация",
+        support: "Присоединяйтесь к нашему серверу поддержки для помощи и обновлений",
         language: "Хотите изменить язык?",
         languageCommand: "Вы можете изменить язык бота с помощью команды `/language set.`",
         viewLanguages: "Посмотреть это на других языках",
-        description: "Я бот для тикетов, система поддержки, утилиты и многое другое."
+        description: "Продвинутая система тикетов для Discord с аналитикой и многоязычной поддержкой."
     },
     ja: {
-        greeting: "素晴らしいサーバーに追加していただき、ありがとうございます！😻",
-        expectation: "あなたの期待に応え、サーバーでお手伝いできることを願っています！💖",
-        prefix: "デフォルトのプレフィックスは！または/です",
-        help: "！helpまたは/helpですべてのコマンドを確認できます",
-        website: "ウェブサイトでもコマンドリストを確認できます。",
-        links: "関連リンク",
-        dashboard: "ダッシュボードで設定できます。",
-        patreon: "Patreonでクールなものをアンロックできます！",
-        wiki: "ガイドが必要な場合は、Wikiがあります",
-        support: "ヘルプが必要ですか？サポートサーバーに参加できます。",
+        greeting: "TicketMeshへようこそ！🎫",
+        expectation: "私は、サーバーのサポートワークフローを効率化するために設計された高度なDiscordチケットシステムです！",
+        features: "**主な機能:**\n• インタラクティブセットアップウィザード\n• マルチカテゴリチケット\n• 高度な分析\n• 自動トランスクリプト\n• サポートロール管理",
+        quickStart: "**クイックスタート:**\n• `/setup-wizard`を使用してチケットシステムを設定\n• チケットカテゴリと権限を設定\n• `/stats`コマンドで監視",
+        help: "`/help`を使用してすべての機能とコマンドを探索",
+        links: "リソースとサポート",
+        dashboard: "Webダッシュボードでチケットシステムを設定",
+        github: "GitHubでソースコードを表示し、貢献",
+        wiki: "包括的なガイドとドキュメント",
+        support: "ヘルプとアップデートのためにサポートサーバーに参加",
         language: "言語を変更しますか？",
         languageCommand: "`/language set.`コマンドを使用してボットの言語を変更できます。",
         viewLanguages: "他の言語でこれを表示",
-        description: "私はチケットボット、サポートシステム、ユーティリティなどです。"
+        description: "分析と多言語サポートを備えた高度なDiscordチケットシステム。"
     },
     ko: {
-        greeting: "이렇게 멋진 서버에 저를 추가해 주셔서 정말 감사합니다! 😻",
-        expectation: "여러분의 기대에 부응하고 서버에서 도움을 드릴 수 있기를 바랍니다! 💖",
-        prefix: "기본 접두사는 ! 또는 /입니다",
-        help: "!help 또는 /help로 모든 명령어를 볼 수 있습니다",
-        website: "웹사이트에서도 명령어 목록을 볼 수 있습니다.",
-        links: "관련 링크",
-        dashboard: "대시보드로 저를 설정할 수 있습니다.",
-        patreon: "Patreon에서 멋진 것들을 잠금 해제할 수 있습니다!",
-        wiki: "가이드가 필요하시면 위키가 있습니다",
-        support: "도움이 필요하신가요? 지원 서버에 참여할 수 있습니다.",
+        greeting: "TicketMesh에 오신 것을 환영합니다! 🎫",
+        expectation: "저는 서버의 지원 워크플로우를 최적화하도록 설계된 고급 Discord 티켓 시스템입니다!",
+        features: "**주요 기능:**\n• 대화형 설정 마법사\n• 다중 카테고리 티켓\n• 고급 분석\n• 자동 전사\n• 지원 역할 관리",
+        quickStart: "**빠른 시작:**\n• `/setup-wizard`를 사용하여 티켓 시스템 설정\n• 티켓 카테고리와 권한 설정\n• `/stats` 명령어로 모니터링",
+        help: "`/help`를 사용하여 모든 기능과 명령어 탐색",
+        links: "리소스 및 지원",
+        dashboard: "웹 대시보드로 티켓 시스템 설정",
+        github: "GitHub에서 소스 코드 보기 및 기여",
+        wiki: "포괄적인 가이드 및 문서",
+        support: "도움과 업데이트를 위해 지원 서버에 참여",
         language: "언어를 변경하시겠습니까?",
         languageCommand: "`/language set.` 명령어를 사용하여 봇의 언어를 변경할 수 있습니다.",
         viewLanguages: "다른 언어로 보기",
-        description: "저는 티켓 봇, 지원 시스템, 유틸리티 등입니다."
+        description: "분석 및 다국어 지원을 갖춘 고급 Discord 티켓 시스템."
     },
     zh: {
-        greeting: "非常感谢您将我添加到如此美妙的服务器！😻",
-        expectation: "我希望能够满足您的期望并在您的服务器上为您提供帮助！💖",
-        prefix: "我的默认前缀是！或/",
-        help: "您可以使用！help或/help查看所有命令",
-        website: "您也可以在网站上查看我的命令列表。",
-        links: "相关链接",
-        dashboard: "您可以使用我的仪表板来配置我。",
-        patreon: "您可以在我的Patreon上解锁很酷的东西！",
-        wiki: "如果您需要指南，我有一个wiki",
-        support: "需要帮助吗？您可以加入我的支持服务器。",
+        greeting: "欢迎使用TicketMesh！🎫",
+        expectation: "我是您的高级Discord票务系统，专为优化服务器支持工作流程而设计！",
+        features: "**主要功能:**\n• 交互式设置向导\n• 多类别票务\n• 高级分析\n• 自动转录\n• 支持角色管理",
+        quickStart: "**快速开始:**\n• 使用`/setup-wizard`配置票务系统\n• 设置票务类别和权限\n• 使用`/stats`命令进行监控",
+        help: "使用`/help`探索所有功能和命令",
+        links: "资源和支持",
+        dashboard: "使用我们的网络仪表板配置票务系统",
+        github: "在GitHub上查看源代码并贡献",
+        wiki: "全面的指南和文档",
+        support: "加入我们的支持服务器获取帮助和更新",
         language: "您想更改语言吗？",
         languageCommand: "您可以使用`/language set.`命令更改机器人的语言。",
         viewLanguages: "用其他语言查看",
-        description: "我是一个票务机器人、支持系统、实用工具等等。"
+        description: "具有分析和多语言支持的高级Discord票务系统。"
     }
 } as const;
 
@@ -231,7 +231,7 @@ export class WelcomeMessageBuilder {
             .setButtonAccessory(
                 new ButtonBuilder()
                     .setStyle(ButtonStyle.Secondary)
-                    .setLabel('👋')
+                    .setLabel('🎫')
                     .setCustomId('welcome_greeting')
                     .setDisabled(true)
             );
@@ -244,17 +244,31 @@ export class WelcomeMessageBuilder {
                     .setDescription('TicketMesh Banner')
             );
 
-        // Basic usage section
-        const usageSection = new SectionBuilder()
+        // Features section
+        const featuresSection = new SectionBuilder()
             .addTextDisplayComponents(
                 new TextDisplayBuilder()
-                    .setContent(`**Basic Usage:**\n• ${messages.prefix}\n• ${messages.help}\n• ${messages.website}`)
+                    .setContent(messages.features)
             )
             .setButtonAccessory(
                 new ButtonBuilder()
                     .setStyle(ButtonStyle.Secondary)
-                    .setLabel('📖')
-                    .setCustomId('welcome_usage')
+                    .setLabel('⚡')
+                    .setCustomId('welcome_features')
+                    .setDisabled(true)
+            );
+
+        // Quick start section
+        const quickStartSection = new SectionBuilder()
+            .addTextDisplayComponents(
+                new TextDisplayBuilder()
+                    .setContent(messages.quickStart)
+            )
+            .setButtonAccessory(
+                new ButtonBuilder()
+                    .setStyle(ButtonStyle.Secondary)
+                    .setLabel('🚀')
+                    .setCustomId('welcome_quickstart')
                     .setDisabled(true)
             );
 
@@ -262,7 +276,7 @@ export class WelcomeMessageBuilder {
         const linksSection = new SectionBuilder()
             .addTextDisplayComponents(
                 new TextDisplayBuilder()
-                    .setContent(`**${messages.links}:**\n• ${messages.dashboard}\n• ${messages.patreon}\n• ${messages.wiki}\n• ${messages.support}`)
+                    .setContent(`**${messages.links}:**\n• ${messages.dashboard}\n• ${messages.github}\n• ${messages.wiki}\n• ${messages.support}`)
             )
             .setButtonAccessory(
                 new ButtonBuilder()
@@ -290,7 +304,8 @@ export class WelcomeMessageBuilder {
         container
             .addSectionComponents(welcomeSection)
             .addMediaGalleryComponents(bannerGallery)
-            .addSectionComponents(usageSection)
+            .addSectionComponents(featuresSection)
+            .addSectionComponents(quickStartSection)
             .addSectionComponents(linksSection)
             .addSectionComponents(languageSection);
 
