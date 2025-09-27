@@ -90,15 +90,6 @@ export async function execute(interaction: Interaction, client: Client) {
 
         // Handle button interactions
         if (interaction.isButton()) {
-            // Handle language selector button
-            if (interaction.customId.startsWith('language_select_')) {
-                const welcomeBuilder = new (await import('../utils/WelcomeMessageBuilder.js')).WelcomeMessageBuilder('en', interaction.guildId!);
-                const languageSelector = welcomeBuilder.buildLanguageSelector();
-                
-                await interaction.reply(languageSelector);
-                return;
-            }
-
             // Handle help button interactions
             if (await handleHelpButtonInteraction(interaction, client)) {
                 return;

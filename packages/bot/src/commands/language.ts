@@ -131,9 +131,9 @@ async function handleSetLanguage(interaction: ChatInputCommandInteraction, guild
     const welcomeBuilder = new WelcomeMessageBuilder(language, interaction.guildId!);
     const welcomeMessage = welcomeBuilder.build();
     
-    // Send the welcome message to the channel (not ephemeral)
+    // Send the welcome message to the channel (Display Components V2 can only be used with initial reply)
     await interaction.followUp({
-        ...welcomeMessage,
+        content: `🌐 **Welcome to TicketMesh!**\n\nBot language has been set to ${languageInfo.flag} **${languageInfo.name}**. Use \`/help\` to explore all features.`,
         ephemeral: false
     });
 }
@@ -209,9 +209,9 @@ export async function handleLanguageSelector(interaction: StringSelectMenuIntera
         const welcomeBuilder = new WelcomeMessageBuilder(selectedLanguage, interaction.guildId);
         const welcomeMessage = welcomeBuilder.build();
         
-        // Send the welcome message to the channel (not ephemeral)
+        // Send the welcome message to the channel (Display Components V2 can only be used with initial reply)
         await interaction.followUp({
-            ...welcomeMessage,
+            content: `🌐 **Welcome to TicketMesh!**\n\nBot language has been changed to ${languageInfo.flag} **${languageInfo.name}**. Use \`/help\` to explore all features.`,
             ephemeral: false
         });
         

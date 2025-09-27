@@ -5,11 +5,14 @@ import {
     ButtonBuilder,
     ButtonStyle,
     StringSelectMenuBuilder,
-    SelectMenuOptionBuilder,
+    StringSelectMenuOptionBuilder,
     ActionRowBuilder,
     MessageFlags,
     MediaGalleryBuilder,
-    MediaGalleryItemBuilder
+    MediaGalleryItemBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    type MessageActionRowComponentBuilder
 } from 'discord.js';
 
 /**
@@ -217,100 +220,75 @@ export class WelcomeMessageBuilder {
         // Banner URL for ImageKit
         const bannerUrl = 'https://ik.imagekit.io/elenyx/Banner.png';
 
+        // Create language selector
+        const languageSelectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`language_change_${this.guildId}`)
+            .setPlaceholder('Select Languages')
+            .setMinValues(1)
+            .setMaxValues(1);
+
+        // Add language options
+        Object.entries(SUPPORTED_LANGUAGES).forEach(([code, lang]) => {
+            const option = new StringSelectMenuOptionBuilder()
+                .setLabel(lang.name)
+                .setValue(code)
+                .setDescription(`Change language to ${lang.name}`)
+                .setEmoji({ name: lang.flag })
+                .setDefault(code === this.language);
+            
+            languageSelectMenu.addOptions(option);
+        });
+
         // Main container with accent color
         const container = new ContainerBuilder()
-            .setAccentColor(0x5865F2) // Discord blurple
-            .setSpoiler(false);
-
-        // Welcome section with greeting
-        const welcomeSection = new SectionBuilder()
+            .setAccentColor(8146337) // Custom color as specified
             .addTextDisplayComponents(
-                new TextDisplayBuilder()
-                    .setContent(`**${messages.greeting}**\n\n${messages.expectation}`)
+                new TextDisplayBuilder().setContent(`**${messages.greeting}**`)
             )
-            .setButtonAccessory(
-                new ButtonBuilder()
-                    .setStyle(ButtonStyle.Secondary)
-                    .setLabel('🎫')
-                    .setCustomId('welcome_greeting')
-                    .setDisabled(true)
-            );
-
-        // Banner section using MediaGallery
-        const bannerGallery = new MediaGalleryBuilder()
-            .addItems(
-                new MediaGalleryItemBuilder()
-                    .setURL(bannerUrl)
-                    .setDescription('TicketMesh Banner')
-            );
-
-        // Features section
-        const featuresSection = new SectionBuilder()
             .addTextDisplayComponents(
-                new TextDisplayBuilder()
-                    .setContent(messages.features)
+                new TextDisplayBuilder().setContent(messages.expectation)
             )
-            .setButtonAccessory(
-                new ButtonBuilder()
-                    .setStyle(ButtonStyle.Secondary)
-                    .setLabel('⚡')
-                    .setCustomId('welcome_features')
-                    .setDisabled(true)
-            );
-
-        // Quick start section
-        const quickStartSection = new SectionBuilder()
+            .addMediaGalleryComponents(
+                new MediaGalleryBuilder()
+                    .addItems(
+                        new MediaGalleryItemBuilder()
+                            .setURL(bannerUrl)
+                            .setDescription('TicketMesh Banner')
+                    )
+            )
+            .addSeparatorComponents(
+                new SeparatorBuilder()
+                    .setSpacing(SeparatorSpacingSize.Small)
+                    .setDivider(true)
+            )
             .addTextDisplayComponents(
-                new TextDisplayBuilder()
-                    .setContent(messages.quickStart)
+                new TextDisplayBuilder().setContent(messages.features)
             )
-            .setButtonAccessory(
-                new ButtonBuilder()
-                    .setStyle(ButtonStyle.Secondary)
-                    .setLabel('🚀')
-                    .setCustomId('welcome_quickstart')
-                    .setDisabled(true)
-            );
-
-        // Links section
-        const linksSection = new SectionBuilder()
             .addTextDisplayComponents(
-                new TextDisplayBuilder()
-                    .setContent(`**${messages.links}:**\n• ${messages.dashboard}\n• ${messages.github}\n• ${messages.wiki}\n• ${messages.support}`)
+                new TextDisplayBuilder().setContent(messages.quickStart)
             )
-            .setButtonAccessory(
-                new ButtonBuilder()
-                    .setStyle(ButtonStyle.Secondary)
-                    .setLabel('🔗')
-                    .setCustomId('welcome_links')
-                    .setDisabled(true)
-            );
-
-        // Language selector section
-        const languageSection = new SectionBuilder()
             .addTextDisplayComponents(
-                new TextDisplayBuilder()
-                    .setContent(`💬 **${messages.language}**\n\n${messages.languageCommand}`)
+                new TextDisplayBuilder().setContent(`**${messages.links}:**\n• ${messages.dashboard}\n• ${messages.github}\n• ${messages.wiki}\n• ${messages.support}`)
             )
-            .setButtonAccessory(
-                new ButtonBuilder()
-                    .setCustomId(`language_select_${this.guildId}`)
-                    .setLabel(messages.viewLanguages)
-                    .setStyle(ButtonStyle.Secondary)
-                    .setEmoji({ name: '🌐' })
+            .addSeparatorComponents(
+                new SeparatorBuilder()
+                    .setSpacing(SeparatorSpacingSize.Small)
+                    .setDivider(true)
+            )
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(`💬 **${messages.language}**`)
+            )
+            .addActionRowComponents(
+                new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                    .addComponents(languageSelectMenu)
+            )
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(messages.languageCommand)
             );
-
-        // Add all sections to container
-        container
-            .addSectionComponents(welcomeSection)
-            .addMediaGalleryComponents(bannerGallery)
-            .addSectionComponents(featuresSection)
-            .addSectionComponents(quickStartSection)
-            .addSectionComponents(linksSection)
-            .addSectionComponents(languageSection);
 
         return {
-            components: [container]
+            components: [container],
+            flags: MessageFlags.IsComponentsV2
         };
     }
 
@@ -326,7 +304,7 @@ export class WelcomeMessageBuilder {
 
         // Add language options
         Object.entries(SUPPORTED_LANGUAGES).forEach(([code, lang]) => {
-            const option = new SelectMenuOptionBuilder()
+            const option = new StringSelectMenuOptionBuilder()
                 .setLabel(`${lang.flag} ${lang.name}`)
                 .setValue(code)
                 .setDescription(`Change language to ${lang.name}`)
@@ -339,6 +317,7 @@ export class WelcomeMessageBuilder {
             .addComponents(selectMenu);
 
         return {
+            content: '🌐 **Select a language for the bot:**',
             components: [actionRow],
             ephemeral: true
         };
