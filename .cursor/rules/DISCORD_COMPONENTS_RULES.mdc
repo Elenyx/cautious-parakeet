@@ -1,0 +1,643 @@
+---
+description: Discord Components related
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Discord Components Development Rules
+
+## Overview
+
+This document outlines the rules and best practices for implementing Discord components in the TicketMesh project, covering both traditional interactive components and the new Display Components V2 system.
+
+## Component Types and Usage
+
+### Interactive Components (Traditional)
+
+#### Action Rows
+- **Purpose**: Container for interactive components (buttons, select menus, text inputs)
+- **Limitations**: Maximum 5 components per action row
+- **Usage**: Always wrap interactive components in action rows
+
+```typescript
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+
+const actionRow = new ActionRowBuilder<ButtonBuilder>()
+    .addComponents(
+        new ButtonBuilder()
+            .setCustomId('example_button')
+            .setLabel('Example Button')
+            .setStyle(ButtonStyle.Primary)
+    );
+```
+
+#### Buttons
+- **Styles**: Primary, Secondary, Success, Danger, Link
+- **Custom ID**: Required for non-link buttons (max 100 characters)
+- **Labels**: Max 80 characters
+- **Emojis**: Optional, can be Unicode or custom emoji objects
+
+```typescript
+// Primary action button
+new ButtonBuilder()
+    .setCustomId('ticket_create_support')
+    .setLabel('🎫 Support Ticket')
+    .setStyle(ButtonStyle.Primary)
+
+// Link button
+new ButtonBuilder()
+    .setLabel('Join Support Server')
+    .setStyle(ButtonStyle.Link)
+    .setURL('https://discord.gg/EGnvFKd6p3')
+    .setEmoji('💬')
+```
+
+#### Select Menus
+- **String Select**: Dropdown with custom options (max 25 options)
+- **User Select**: Select users from the server
+- **Role Select**: Select roles from the server
+- **Channel Select**: Select channels with optional type filtering
+- **Mentionable Select**: Select users or roles
+
+```typescript
+import { StringSelectMenuBuilder, SelectOptionBuilder } from 'discord.js';
+
+const selectMenu = new StringSelectMenuBuilder()
+    .setCustomId('ticket_category_select')
+    .setPlaceholder('Choose a ticket category')
+    .addOptions(
+        new SelectOptionBuilder()
+            .setLabel('General Support')
+            .setValue('support')
+            .setDescription('Get help with general questions')
+            .setEmoji('🎫'),
+        new SelectOptionBuilder()
+            .setLabel('Bug Report')
+            .setValue('bug_report')
+            .setDescription('Report bugs or technical issues')
+            .setEmoji('🐛')
+    );
+```
+
+#### Text Inputs (Modals)
+- **Styles**: Short (single line) or Paragraph (multi-line)
+- **Validation**: Min/max length, required fields
+- **Usage**: Only available in modals
+
+```typescript
+import { TextInputBuilder, TextInputStyle } from 'discord.js';
+
+const textInput = new TextInputBuilder()
+    .setCustomId('ticket_description')
+    .setLabel('Describe your issue')
+    .setStyle(TextInputStyle.Paragraph)
+    .setMinLength(10)
+    .setMaxLength(1000)
+    .setRequired(true)
+    .setPlaceholder('Please provide a detailed description...');
+```
+
+### Display Components V2 (New System)
+
+#### Message Flags Requirement
+- **Critical**: Always use `MessageFlags.IsComponentsV2` when sending display components
+- **Restrictions**: Cannot use `content`, `embeds`, `poll`, or `stickers` with display components
+- **Text Limit**: Maximum 4000 characters across all text display components
+
+```typescript
+import { MessageFlags } from 'discord.js';
+
+await interaction.reply({
+    components: [displayComponents],
+    flags: MessageFlags.IsComponentsV2,
+    ephemeral: true
+});
+```
+
+#### Text Display
+- **Purpose**: Replace message content with markdown-formatted text
+- **Features**: Full markdown support, mentions (with notifications)
+- **Usage**: Primary content component
+
+```typescript
+import { TextDisplayBuilder } from 'discord.js';
+
+const textDisplay = new TextDisplayBuilder()
+    .setContent('**🎫 Support Ticket System**\n\nWelcome to our support system! Choose the appropriate ticket type below.');
+```
+
+#### Section
+- **Purpose**: Text with accessory (button or thumbnail)
+- **Limitations**: 1-3 Text Display components + 1 accessory
+- **Accessory Types**: Button or Thumbnail only
+
+```typescript
+import { SectionBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+
+const section = new SectionBuilder()
+    .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('**General Support** - Get help with questions, issues, or guidance')
+    )
+    .setButtonAccessory(
+        new ButtonBuilder()
+            .setCustomId('ticket_create_support')
+            .setLabel('🎫 Support Ticket')
+            .setStyle(ButtonStyle.Primary)
+    );
+```
+
+#### Container
+- **Purpose**: Group components in visually distinct rounded box
+- **Features**: Optional accent color, spoiler support
+- **Child Components**: Action Rows, Text Display, Section, Media Gallery, Separator, File
+
+```typescript
+import { ContainerBuilder } from 'discord.js';
+
+const container = new ContainerBuilder()
+    .setAccentColor(0x5865F2) // Discord blurple
+    .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('**🎛️ Ticket System Setup Wizard**')
+    )
+    .addSectionComponents(section)
+    .addSeparatorComponents(separator);
+```
+
+#### Thumbnail
+- **Purpose**: Display images with alt text and spoiler support
+- **Usage**: As accessory in Section components
+- **File References**: Use `attachment://filename` for uploaded files
+
+```typescript
+import { ThumbnailBuilder } from 'discord.js';
+
+const thumbnail = new ThumbnailBuilder()
+    .setDescription('Ticket system banner')
+    .setURL('attachment://banner.png')
+    .setSpoiler(false);
+```
+
+#### Media Gallery
+- **Purpose**: Grid display of up to 10 media items
+- **Features**: Individual descriptions, spoiler support
+- **Usage**: For showcasing multiple images/files
+
+```typescript
+import { MediaGalleryBuilder, MediaGalleryItemBuilder } from 'discord.js';
+
+const mediaGallery = new MediaGalleryBuilder()
+    .addItems(
+        new MediaGalleryItemBuilder()
+            .setDescription('Screenshot of the issue')
+            .setURL('attachment://screenshot1.png'),
+        new MediaGalleryItemBuilder()
+            .setDescription('Error log file')
+            .setURL('attachment://error.log')
+            .setSpoiler(true)
+    );
+```
+
+#### File
+- **Purpose**: Display uploaded files in message body
+- **Features**: Spoiler support, multiple files per message
+- **Limitations**: No alt text/descriptions
+
+```typescript
+import { FileBuilder } from 'discord.js';
+
+const file = new FileBuilder()
+    .setURL('attachment://guide.pdf')
+    .setSpoiler(false);
+```
+
+#### Separator
+- **Purpose**: Visual spacing and division between components
+- **Options**: Divider line (true/false), spacing size (small/large)
+- **Warning**: Cannot be used alone without other components
+
+```typescript
+import { SeparatorBuilder, SeparatorSpacingSize } from 'discord.js';
+
+const separator = new SeparatorBuilder()
+    .setDivider(true)
+    .setSpacing(SeparatorSpacingSize.Large);
+```
+
+## Implementation Rules
+
+### Component Organization
+
+#### File Structure
+```
+src/
+├── components/
+│   ├── builders/           # Component builder utilities
+│   │   ├── DisplayComponentBuilder.ts
+│   │   ├── InteractiveComponentBuilder.ts
+│   │   └── HelpComponentBuilder.ts
+│   ├── handlers/           # Component interaction handlers
+│   │   ├── ButtonHandler.ts
+│   │   ├── SelectMenuHandler.ts
+│   │   └── ModalHandler.ts
+│   └── types/              # Component type definitions
+│       └── ComponentTypes.ts
+```
+
+#### Naming Conventions
+- **Builders**: `ComponentTypeBuilder` (e.g., `TicketPanelBuilder`)
+- **Handlers**: `ComponentTypeHandler` (e.g., `ButtonInteractionHandler`)
+- **Custom IDs**: Use descriptive prefixes (e.g., `ticket_create_`, `help_`, `setup_`)
+
+### Component Builders
+
+#### Builder Pattern Implementation
+```typescript
+export class TicketPanelBuilder {
+    private components: Component[] = [];
+    
+    addSupportSection(): this {
+        const section = new SectionBuilder()
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent('**General Support** - Get help with questions')
+            )
+            .setButtonAccessory(
+                new ButtonBuilder()
+                    .setCustomId('ticket_create_support')
+                    .setLabel('🎫 Support Ticket')
+                    .setStyle(ButtonStyle.Primary)
+            );
+        
+        this.components.push(section);
+        return this;
+    }
+    
+    build(): Component[] {
+        return this.components;
+    }
+}
+```
+
+#### Reusable Component Patterns
+```typescript
+// Navigation buttons for help system
+export function createNavigationButtons(currentCategory?: string): ActionRowBuilder<ButtonBuilder>[] {
+    const categories = [
+        { id: 'help_overview', label: 'Overview', emoji: '🏠', style: ButtonStyle.Primary },
+        { id: 'help_commands', label: 'Commands', emoji: '📋', style: ButtonStyle.Secondary },
+        // ... more categories
+    ];
+    
+    // Implementation details...
+}
+
+// Quick action buttons (links)
+export function createQuickActionButtons(): ActionRowBuilder<ButtonBuilder> {
+    return new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+            new ButtonBuilder()
+                .setLabel('Join Support Server')
+                .setStyle(ButtonStyle.Link)
+                .setURL('https://discord.gg/EGnvFKd6p3')
+                .setEmoji('💬')
+        );
+}
+```
+
+### Interaction Handling
+
+#### Handler Structure
+```typescript
+export async function handleButtonInteraction(
+    interaction: ButtonInteraction, 
+    client: Client
+): Promise<boolean> {
+    const errorLogger = ErrorLogger.getInstance();
+    
+    try {
+        // Check if this handler should process the interaction
+        if (!interaction.customId.startsWith('ticket_')) {
+            return false;
+        }
+        
+        // Handle specific button interactions
+        switch (interaction.customId) {
+            case 'ticket_create_support':
+                await handleSupportTicketCreation(interaction);
+                break;
+            case 'ticket_close':
+                await handleTicketClosure(interaction);
+                break;
+            default:
+                console.log(`Unknown button interaction: ${interaction.customId}`);
+                return false;
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('Error handling button interaction:', error);
+        await errorLogger.logCommandError(error as Error, {
+            guildId: interaction.guildId || undefined,
+            userId: interaction.user.id,
+            commandName: 'button_interaction'
+        });
+        
+        // Send error response
+        await sendErrorResponse(interaction, 'An error occurred while processing your request.');
+        return true;
+    }
+}
+```
+
+#### Error Handling Pattern
+```typescript
+async function sendErrorResponse(interaction: Interaction, message: string): Promise<void> {
+    try {
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+                content: `❌ ${message}`,
+                ephemeral: true
+            });
+        } else {
+            await interaction.reply({
+                content: `❌ ${message}`,
+                ephemeral: true
+            });
+        }
+    } catch (replyError) {
+        console.error('Failed to send error response:', replyError);
+    }
+}
+```
+
+### Component Validation
+
+#### Input Validation
+```typescript
+function validateComponentInputs(components: Component[]): void {
+    // Check total component count (max 40 for display components)
+    if (components.length > 40) {
+        throw new Error('Cannot have more than 40 components in a message');
+    }
+    
+    // Check text length across all text display components
+    const totalTextLength = components
+        .filter(c => c.type === ComponentType.TextDisplay)
+        .reduce((total, component) => total + (component.content?.length || 0), 0);
+    
+    if (totalTextLength > 4000) {
+        throw new Error('Total text length cannot exceed 4000 characters');
+    }
+}
+```
+
+#### Custom ID Validation
+```typescript
+function validateCustomId(customId: string): void {
+    if (customId.length > 100) {
+        throw new Error('Custom ID cannot exceed 100 characters');
+    }
+    
+    if (!/^[a-zA-Z0-9_-]+$/.test(customId)) {
+        throw new Error('Custom ID can only contain alphanumeric characters, underscores, and hyphens');
+    }
+}
+```
+
+## Best Practices
+
+### Component Design
+
+#### Visual Hierarchy
+- Use **Container** components for major sections with accent colors
+- Use **Section** components for related content with accessories
+- Use **Separator** components for visual breaks between sections
+- Use **Text Display** components for primary content
+
+#### Color Scheme
+```typescript
+const COLORS = {
+    PRIMARY: 0x5865F2,      // Discord blurple
+    SUCCESS: 0x00FF00,      // Green for success states
+    WARNING: 0xFFA500,      // Orange for warnings
+    ERROR: 0xFF0000,        // Red for errors
+    INFO: 0x0099FF,         // Blue for information
+    NEUTRAL: 0x2F3136       // Dark gray for neutral content
+} as const;
+```
+
+#### Accessibility
+- Always provide alt text for images using `setDescription()`
+- Use descriptive labels for buttons and select options
+- Provide clear visual feedback for interactive elements
+- Use appropriate emojis to enhance readability
+
+### Performance Considerations
+
+#### Component Caching
+```typescript
+class ComponentCache {
+    private static cache = new Map<string, Component[]>();
+    
+    static get(key: string): Component[] | undefined {
+        return this.cache.get(key);
+    }
+    
+    static set(key: string, components: Component[]): void {
+        this.cache.set(key, components);
+    }
+    
+    static clear(): void {
+        this.cache.clear();
+    }
+}
+```
+
+#### Lazy Loading
+```typescript
+// Load components only when needed
+async function getHelpComponents(category: string): Promise<Component[]> {
+    const cacheKey = `help_${category}`;
+    let components = ComponentCache.get(cacheKey);
+    
+    if (!components) {
+        components = await buildHelpComponents(category);
+        ComponentCache.set(cacheKey, components);
+    }
+    
+    return components;
+}
+```
+
+### Security Considerations
+
+#### Custom ID Sanitization
+```typescript
+function sanitizeCustomId(input: string): string {
+    return input
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .substring(0, 100);
+}
+```
+
+#### Permission Validation
+```typescript
+async function validateComponentPermissions(
+    interaction: Interaction, 
+    requiredPermissions: PermissionFlagsBits[]
+): Promise<boolean> {
+    if (!interaction.memberPermissions) {
+        return false;
+    }
+    
+    return requiredPermissions.every(permission => 
+        interaction.memberPermissions.has(permission)
+    );
+}
+```
+
+## Migration Guidelines
+
+### From Traditional to Display Components
+
+#### When to Use Display Components
+- **Use Display Components V2 for**:
+  - Rich, structured content layouts
+  - Complex UI with multiple sections
+  - Content that benefits from visual hierarchy
+  - Modern, card-like interfaces
+
+- **Use Traditional Components for**:
+  - Simple button interactions
+  - Form inputs (modals)
+  - Quick action menus
+  - Backward compatibility
+
+#### Migration Strategy
+1. **Identify candidates**: Look for complex embed-based interfaces
+2. **Convert gradually**: Start with new features using display components
+3. **Maintain compatibility**: Keep traditional components for simple interactions
+4. **Test thoroughly**: Ensure all interactions work correctly
+
+### Example Migration
+
+#### Before (Traditional)
+```typescript
+const embed = new EmbedBuilder()
+    .setTitle('🎫 Support Ticket System')
+    .setDescription('Choose a ticket type:')
+    .addFields([
+        { name: 'General Support', value: 'Get help with questions', inline: true },
+        { name: 'Bug Report', value: 'Report technical issues', inline: true }
+    ]);
+
+const row = new ActionRowBuilder<ButtonBuilder>()
+    .addComponents(
+        new ButtonBuilder()
+            .setCustomId('ticket_support')
+            .setLabel('Support')
+            .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+            .setCustomId('ticket_bug')
+            .setLabel('Bug Report')
+            .setStyle(ButtonStyle.Danger)
+    );
+
+await interaction.reply({ embeds: [embed], components: [row] });
+```
+
+#### After (Display Components V2)
+```typescript
+const components = [
+    new ContainerBuilder()
+        .setAccentColor(0x5865F2)
+        .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent('**🎫 Support Ticket System**'),
+            new TextDisplayBuilder().setContent('Choose a ticket type below:')
+        )
+        .addSectionComponents(
+            new SectionBuilder()
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent('**General Support** - Get help with questions')
+                )
+                .setButtonAccessory(
+                    new ButtonBuilder()
+                        .setCustomId('ticket_support')
+                        .setLabel('Support')
+                        .setStyle(ButtonStyle.Primary)
+                ),
+            new SectionBuilder()
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent('**Bug Report** - Report technical issues')
+                )
+                .setButtonAccessory(
+                    new ButtonBuilder()
+                        .setCustomId('ticket_bug')
+                        .setLabel('Bug Report')
+                        .setStyle(ButtonStyle.Danger)
+                )
+        )
+];
+
+await interaction.reply({
+    components,
+    flags: MessageFlags.IsComponentsV2
+});
+```
+
+## Testing Guidelines
+
+### Component Testing
+```typescript
+describe('Ticket Panel Components', () => {
+    test('should create valid display components', () => {
+        const builder = new TicketPanelBuilder();
+        const components = builder
+            .addSupportSection()
+            .addBugReportSection()
+            .build();
+        
+        expect(components).toHaveLength(1);
+        expect(components[0].type).toBe(ComponentType.Container);
+    });
+    
+    test('should validate component limits', () => {
+        const components = Array(41).fill(null).map(() => new TextDisplayBuilder());
+        
+        expect(() => validateComponentInputs(components))
+            .toThrow('Cannot have more than 40 components');
+    });
+});
+```
+
+### Interaction Testing
+```typescript
+describe('Button Interactions', () => {
+    test('should handle support ticket creation', async () => {
+        const interaction = createMockButtonInteraction('ticket_create_support');
+        
+        const result = await handleButtonInteraction(interaction, mockClient);
+        
+        expect(result).toBe(true);
+        expect(interaction.reply).toHaveBeenCalled();
+    });
+});
+```
+
+## Documentation Requirements
+
+### Component Documentation
+- Document all custom component builders
+- Include usage examples for complex components
+- Document component limitations and restrictions
+- Provide migration guides for component updates
+
+### API Documentation
+- Document all component interaction handlers
+- Include error handling patterns
+- Document permission requirements
+- Provide troubleshooting guides
+
+## Conclusion
+
+These rules ensure consistent, maintainable, and user-friendly Discord components throughout the TicketMesh project. Always prioritize user experience, accessibility, and performance when implementing components. Follow the established patterns and gradually migrate to Display Components V2 where appropriate.

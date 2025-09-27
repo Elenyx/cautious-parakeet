@@ -1,4 +1,4 @@
-const { WelcomeMessageBuilder } = require('./dist/utils/WelcomeMessageBuilder.js');
+const { WelcomeMessageBuilder } = require('../dist/utils/WelcomeMessageBuilder.js');
 
 console.log('Testing Welcome Message Builder...');
 

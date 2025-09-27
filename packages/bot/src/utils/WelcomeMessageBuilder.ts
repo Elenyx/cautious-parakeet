@@ -5,7 +5,7 @@ import {
     ButtonBuilder,
     ButtonStyle,
     StringSelectMenuBuilder,
-    StringSelectMenuOptionBuilder,
+    SelectMenuOptionBuilder,
     ActionRowBuilder,
     MessageFlags,
     MediaGalleryBuilder,
@@ -293,7 +293,7 @@ export class WelcomeMessageBuilder {
                     .setContent(`💬 **${messages.language}**\n\n${messages.languageCommand}`)
             )
             .setButtonAccessory(
-                button => button
+                new ButtonBuilder()
                     .setCustomId(`language_select_${this.guildId}`)
                     .setLabel(messages.viewLanguages)
                     .setStyle(ButtonStyle.Secondary)
@@ -326,7 +326,7 @@ export class WelcomeMessageBuilder {
 
         // Add language options
         Object.entries(SUPPORTED_LANGUAGES).forEach(([code, lang]) => {
-            const option = new StringSelectMenuOptionBuilder()
+            const option = new SelectMenuOptionBuilder()
                 .setLabel(`${lang.flag} ${lang.name}`)
                 .setValue(code)
                 .setDescription(`Change language to ${lang.name}`)
