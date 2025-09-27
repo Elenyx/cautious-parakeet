@@ -10,7 +10,6 @@ import {
     MessageFlags,
     AttachmentBuilder
 } from 'discord.js';
-import path from 'path';
 
 /**
  * Supported languages for the bot
@@ -214,36 +213,9 @@ export class WelcomeMessageBuilder {
     public build() {
         const messages = WELCOME_MESSAGES[this.language];
         
-        // Create the banner attachment - try multiple possible paths
-        let bannerPath: string;
-        const possiblePaths = [
-            path.join(process.cwd(), 'assets', 'Banner.png'),
-            path.join(process.cwd(), 'packages', 'bot', 'assets', 'Banner.png'),
-            path.join(__dirname, '..', '..', 'assets', 'Banner.png'),
-            path.join(__dirname, '..', 'assets', 'Banner.png')
-        ];
-        
-        // Find the first existing banner path
-        const fs = require('fs');
-        bannerPath = possiblePaths.find(p => {
-            try {
-                return fs.existsSync(p);
-            } catch {
-                return false;
-            }
-        }) || possiblePaths[0]; // fallback to first path
-        
-        // Create banner attachment only if file exists
-        let banner: AttachmentBuilder | undefined;
-        try {
-            if (fs.existsSync(bannerPath)) {
-                banner = new AttachmentBuilder(bannerPath, { name: 'banner.png' });
-            } else {
-                console.warn(`[WELCOME_MESSAGE] Banner file not found at any of the expected paths: ${possiblePaths.join(', ')}`);
-            }
-        } catch (error) {
-            console.error(`[WELCOME_MESSAGE] Error creating banner attachment:`, error);
-        }
+        // Create the banner attachment using URL
+        const bannerUrl = 'https://ik.imagekit.io/elenyx/Banner.png';
+        const banner = new AttachmentBuilder(bannerUrl, { name: 'banner.png' });
 
         // Main container with accent color
         const container = new ContainerBuilder()
@@ -315,7 +287,7 @@ export class WelcomeMessageBuilder {
 
         return {
             components: [container],
-            files: banner ? [banner] : []
+            files: [banner]
         };
     }
 

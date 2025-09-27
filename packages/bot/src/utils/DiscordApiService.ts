@@ -130,7 +130,7 @@ export class DiscordApiService {
             }
         }
 
-        // Fetch from Discord API with rate limiting
+        // Fetch from Discord API with rate limiting and timeout
         try {
             const members = await this.rateLimitManager.executeWithRateLimit(
                 `guild:${guildId}:members`,
@@ -140,8 +140,13 @@ export class DiscordApiService {
                         return null;
                     }
                     
-                    // Fetch all members (this might be rate limited for large guilds)
-                    const fetchedMembers = await guild.members.fetch();
+                    // Fetch all members with timeout to prevent hanging
+                    const fetchedMembers = await Promise.race([
+                        guild.members.fetch(),
+                        new Promise<never>((_, reject) => 
+                            setTimeout(() => reject(new Error('Guild members fetch timeout')), 30000) // 30 second timeout
+                        )
+                    ]);
                     return Array.from(fetchedMembers.values());
                 }
             );
@@ -156,7 +161,11 @@ export class DiscordApiService {
 
             return await this.redis.getCachedGuildMembers(guildId);
         } catch (error) {
-            console.error(`Error fetching guild members for ${guildId}:`, error);
+            if (error instanceof Error && error.message.includes('timeout')) {
+                console.warn(`Guild members fetch timeout for ${guildId} - this is normal for large guilds`);
+            } else {
+                console.error(`Error fetching guild members for ${guildId}:`, error);
+            }
             return null;
         }
     }
