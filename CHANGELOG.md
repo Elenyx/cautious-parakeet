@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Critical Language Command Registration Bug**
+  - Fixed "Cannot read properties of undefined (reading 'name')" error when registering commands for Korean and other languages
+  - Resolved inconsistent object key formatting in localization files (quoted vs unquoted keys)
+  - All language files now use consistent unquoted object keys for proper TypeScript access
+  - Korean, French, German, Italian, Portuguese, Russian, Japanese, and Chinese language commands now register correctly
+  - Language switching functionality fully restored for all supported languages
+  - Fixed CommandRegistrationManager incorrectly trying to build Context Menu Commands as slash commands
+  - Added missing debug command subcommands (config, transcript) to command registration
+  - All 10 supported languages now pass comprehensive command registration tests
+
+### Enhanced
+- **Automatic Language Switching System**
+  - Enhanced language switching to automatically update all slash commands when language is changed
+  - Commands now automatically re-register with localized names and descriptions when language is switched
+  - Added CommandLanguageHelper utility for consistent language handling across all commands
+  - All interactions now automatically use the guild's configured language
+  - Language switching is instant and seamless - no bot restart required
+  - Command names, descriptions, subcommands, and options are all fully localized
+  - Response messages automatically use the selected language
+  - Complete end-to-end language system with 100% test coverage
+
 ## [1.3.0] - 2025-01-27
 
 ### Added

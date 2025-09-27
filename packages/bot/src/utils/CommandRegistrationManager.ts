@@ -171,17 +171,10 @@ export class CommandRegistrationManager {
         const debugCommand = new LocalizedCommandBuilder('debug')
             .setLocalizedInfo(language)
             .setDefaultMemberPermissions(0x8n) // Administrator
-            .build();
-
-        commands.push(debugCommand.toJSON());
-
-        // User info command
-        const userInfoCommand = new LocalizedCommandBuilder('userinfo')
-            .setLocalizedInfo(language)
-            .setDefaultMemberPermissions(0x10n) // ManageChannels
-            .addLocalizedSubcommand('user', language, (subcommand) => {
-                return subcommand.addUserOption(option => {
-                    const optionData = this.languageService.getOptionData('userinfo', 'user', 'userOption', language);
+            .addLocalizedSubcommand('config', language)
+            .addLocalizedSubcommand('transcript', language, (subcommand) => {
+                return subcommand.addStringOption(option => {
+                    const optionData = this.languageService.getOptionData('debug', 'transcript', 'ticketIdOption', language);
                     return option
                         .setName(optionData.name)
                         .setDescription(optionData.description)
@@ -190,7 +183,10 @@ export class CommandRegistrationManager {
             })
             .build();
 
-        commands.push(userInfoCommand.toJSON());
+        commands.push(debugCommand.toJSON());
+
+        // Note: userinfo and messageinfo are Context Menu Commands, not slash commands
+        // They are registered separately and don't need to be included here
 
         return commands;
     }
