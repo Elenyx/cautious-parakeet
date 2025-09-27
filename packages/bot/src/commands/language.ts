@@ -3,7 +3,8 @@ import {
     ChatInputCommandInteraction,
     PermissionFlagsBits,
     StringSelectMenuInteraction,
-    ComponentType
+    ComponentType,
+    MessageFlags
 } from 'discord.js';
 import { GuildConfigDAO } from '../database/GuildConfigDAO.js';
 import { WelcomeMessageBuilder, SUPPORTED_LANGUAGES, SupportedLanguage } from '../utils/WelcomeMessageBuilder.js';
@@ -127,13 +128,14 @@ async function handleSetLanguage(interaction: ChatInputCommandInteraction, guild
         ephemeral: true
     });
 
-    // Send new welcome message in the selected language
+    // Send new welcome message in the selected language using Display Components V2
     const welcomeBuilder = new WelcomeMessageBuilder(language, interaction.guildId!);
     const welcomeMessage = welcomeBuilder.build();
     
-    // Send the welcome message to the channel (Display Components V2 can only be used with initial reply)
+    // Send the localized welcome message to the channel
     await interaction.followUp({
-        content: `🌐 **Welcome to TicketMesh!**\n\nBot language has been set to ${languageInfo.flag} **${languageInfo.name}**. Use \`/help\` to explore all features.`,
+        components: welcomeMessage.components,
+        flags: MessageFlags.IsComponentsV2,
         ephemeral: false
     });
 }
@@ -205,13 +207,14 @@ export async function handleLanguageSelector(interaction: StringSelectMenuIntera
             ephemeral: true
         });
 
-        // Send new welcome message in the selected language
+        // Send new welcome message in the selected language using Display Components V2
         const welcomeBuilder = new WelcomeMessageBuilder(selectedLanguage, interaction.guildId);
         const welcomeMessage = welcomeBuilder.build();
         
-        // Send the welcome message to the channel (Display Components V2 can only be used with initial reply)
+        // Send the localized welcome message to the channel
         await interaction.followUp({
-            content: `🌐 **Welcome to TicketMesh!**\n\nBot language has been changed to ${languageInfo.flag} **${languageInfo.name}**. Use \`/help\` to explore all features.`,
+            components: welcomeMessage.components,
+            flags: MessageFlags.IsComponentsV2,
             ephemeral: false
         });
         
