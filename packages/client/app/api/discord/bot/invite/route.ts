@@ -19,10 +19,10 @@ export async function GET() {
     }
 
     // Generate bot invite URL with necessary permissions for ticket system
-    // Required permissions: View Channels, Send Messages, Manage Channels, Manage Roles, 
+    // Required permissions: Administrator, View Channels, Send Messages, Manage Channels, Manage Roles, 
     // Read Message History, Attach Files, Embed Links, Use External Emojis, Add Reactions
     // Recommended: Manage Messages
-    const permissions = "268815440" // Calculated from required permissions (268815440)
+    const permissions = "8" // Administrator permission (8) - includes all other permissions
     const scope = "bot%20applications.commands"
     
     const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=${permissions}&scope=${scope}`
@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate bot invite URL with necessary permissions for ticket system
-    // Required permissions: View Channels, Send Messages, Manage Channels, Manage Roles, 
+    // Required permissions: Administrator, View Channels, Send Messages, Manage Channels, Manage Roles, 
     // Read Message History, Attach Files, Embed Links, Use External Emojis, Add Reactions
     // Recommended: Manage Messages
-    const permissions = "268815440" // Calculated from required permissions (268815440)
+    const permissions = "8" // Administrator permission (8) - includes all other permissions
     const scope = "bot%20applications.commands"
     
     const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=${permissions}&scope=${scope}&guild_id=${guildId}`
