@@ -1,4 +1,5 @@
 import { 
+    SlashCommandBuilder,
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     EmbedBuilder,
@@ -9,30 +10,48 @@ import {
 import { StatsHandler } from '../utils/StatsHandler';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
-import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
 import { LanguageService } from '../utils/LanguageService.js';
 // Buffer is available globally in Node.js
 
 /**
  * Stats command to display ticket statistics and analytics
  */
-// Create localized command data - will be dynamically updated based on guild language
-export const data = new LocalizedCommandBuilder('stats')
-    .setLocalizedInfo('en') // Default to English for initial registration
+// Create command data with English names and descriptions
+export const data = new SlashCommandBuilder()
+    .setName('stats')
+    .setDescription('View ticket statistics and analytics (Support Staff only)')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
-    .addLocalizedSubcommand('overview', 'en')
-    .addLocalizedSubcommand('detailed', 'en')
-    .addLocalizedSubcommand('export', 'en')
-    .addLocalizedSubcommand('user', 'en', (subcommand) => {
-        return subcommand.addUserOption((option: SlashCommandUserOption) =>
-            option
-                .setName('user')
-                .setDescription('User to view statistics for')
-                .setRequired(true)
-        );
-    })
-    .addLocalizedSubcommand('realtime', 'en')
-    .build();
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('overview')
+            .setDescription('View general ticket statistics overview')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('detailed')
+            .setDescription('View detailed ticket statistics')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('export')
+            .setDescription('Export statistics to JSON file')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('user')
+            .setDescription('View statistics for a specific user')
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription('User to view statistics for')
+                    .setRequired(true)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('realtime')
+            .setDescription('View real-time ticket statistics')
+    );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();

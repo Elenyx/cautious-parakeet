@@ -1,7 +1,6 @@
 import { GuildConfigDAO } from '../database/GuildConfigDAO.js';
 import { 
     SUPPORTED_LANGUAGES, 
-    COMMAND_LOCALIZATIONS, 
     RESPONSE_MESSAGES, 
     WELCOME_MESSAGES,
     SupportedLanguage 
@@ -52,17 +51,6 @@ export class LanguageService {
         }
     }
 
-    /**
-     * Get localized command data for a specific language
-     */
-    public getLocalizedCommandData(commandName: string, language: SupportedLanguage = 'en'): any {
-        const localizations = COMMAND_LOCALIZATIONS[language as keyof typeof COMMAND_LOCALIZATIONS];
-        if (!localizations || !localizations[commandName as keyof typeof localizations]) {
-            // Fallback to English if language not found
-            return COMMAND_LOCALIZATIONS.en[commandName as keyof typeof COMMAND_LOCALIZATIONS.en];
-        }
-        return localizations[commandName as keyof typeof localizations];
-    }
 
     /**
      * Get localized response message
@@ -135,10 +123,9 @@ export class LanguageService {
             .map(([code, info]) => `${info.flag} **${info.name}** (\`${code}\`)`)
             .join('\n');
         
-        const commandName = this.getLocalizedCommandData('language', language).name;
         return this.getLocalizedMessage('success', 'availableLanguages', language, {
             list: languageList,
-            command: `/${commandName}`
+            command: `/language`
         });
     }
 
@@ -167,35 +154,4 @@ export class LanguageService {
         return this.getLocalizedMessage('success', successKey, language, replacements);
     }
 
-    /**
-     * Get localized command name
-     */
-    public getCommandName(commandName: string, language: SupportedLanguage = 'en'): string {
-        const commandData = this.getLocalizedCommandData(commandName, language);
-        return commandData?.name || commandName;
-    }
-
-    /**
-     * Get localized command description
-     */
-    public getCommandDescription(commandName: string, language: SupportedLanguage = 'en'): string {
-        const commandData = this.getLocalizedCommandData(commandName, language);
-        return commandData?.description || commandName;
-    }
-
-    /**
-     * Get localized subcommand data
-     */
-    public getSubcommandData(commandName: string, subcommandName: string, language: SupportedLanguage = 'en'): any {
-        const commandData = this.getLocalizedCommandData(commandName, language);
-        return commandData?.[subcommandName as keyof typeof commandData];
-    }
-
-    /**
-     * Get localized option data
-     */
-    public getOptionData(commandName: string, subcommandName: string, optionName: string, language: SupportedLanguage = 'en'): any {
-        const subcommandData = this.getSubcommandData(commandName, subcommandName, language);
-        return subcommandData?.[optionName as keyof typeof subcommandData];
-    }
 }

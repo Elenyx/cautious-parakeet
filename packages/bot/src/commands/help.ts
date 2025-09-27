@@ -10,20 +10,43 @@ import {
 import { ErrorLogger } from '../utils/ErrorLogger';
 import { HelpEmbedBuilder } from '../utils/HelpEmbedBuilder';
 import { LanguageService } from '../utils/LanguageService.js';
-import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
 
 /**
  * Help command to provide comprehensive usage instructions and support information
  */
-export const data = new LocalizedCommandBuilder('help')
-    .setLocalizedInfo('en') // Default to English for initial registration
-    .addLocalizedSubcommand('overview', 'en')
-    .addLocalizedSubcommand('commands', 'en')
-    .addLocalizedSubcommand('setup', 'en')
-    .addLocalizedSubcommand('tickets', 'en')
-    .addLocalizedSubcommand('permissions', 'en')
-    .addLocalizedSubcommand('support', 'en')
-    .build();
+export const data = new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('Get help and usage instructions for TicketMesh')
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('overview')
+            .setDescription('Get a general overview of TicketMesh features')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('commands')
+            .setDescription('View all available commands and their usage')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('setup')
+            .setDescription('Get help with setting up the ticket system')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('tickets')
+            .setDescription('Learn how to use the ticket system')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('permissions')
+            .setDescription('Understand required permissions and roles')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('support')
+            .setDescription('Get support and contact information')
+    );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();

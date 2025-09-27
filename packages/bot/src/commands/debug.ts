@@ -1,4 +1,5 @@
 import { 
+    SlashCommandBuilder,
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     EmbedBuilder
@@ -6,26 +7,32 @@ import {
 import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { TranscriptUtil } from '../utils/TranscriptUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
-import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
 import { LanguageService } from '../utils/LanguageService.js';
 
 /**
  * Debug command for testing and troubleshooting the ticket system
  */
-// Create localized command data - will be dynamically updated based on guild language
-export const data = new LocalizedCommandBuilder('debug')
-    .setLocalizedInfo('en') // Default to English for initial registration
+// Create command data with English names and descriptions
+export const data = new SlashCommandBuilder()
+    .setName('debug')
+    .setDescription('Debug and test ticket system functionality (Administrator only)')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addLocalizedSubcommand('config', 'en')
-    .addLocalizedSubcommand('transcript', 'en', (subcommand) => {
-        return subcommand.addStringOption(option =>
-            option
-                .setName('ticket_id')
-                .setDescription('The ticket ID to generate transcript for')
-                .setRequired(true)
-        );
-    })
-    .build();
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('config')
+            .setDescription('Check current guild configuration')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('transcript')
+            .setDescription('Test transcript generation for a specific ticket')
+            .addStringOption(option =>
+                option
+                    .setName('ticket_id')
+                    .setDescription('The ticket ID to generate transcript for')
+                    .setRequired(true)
+            )
+    );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();

@@ -31,19 +31,7 @@ export const SUPPORTED_LANGUAGES = {
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
 
-// Command localizations
-export const COMMAND_LOCALIZATIONS = {
-    en: EN_LOCALIZATION.commands,
-    es: ES_LOCALIZATION.commands,
-    fr: FR_LOCALIZATION.commands,
-    de: DE_LOCALIZATION.commands,
-    it: IT_LOCALIZATION.commands,
-    pt: PT_LOCALIZATION.commands,
-    ru: RU_LOCALIZATION.commands,
-    ja: JA_LOCALIZATION.commands,
-    ko: KO_LOCALIZATION.commands,
-    zh: ZH_LOCALIZATION.commands
-} as const;
+// Command localizations removed - commands now use English names/descriptions only
 
 // Response messages
 export const RESPONSE_MESSAGES = {

@@ -1,4 +1,5 @@
 import { 
+    SlashCommandBuilder,
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     EmbedBuilder,
@@ -10,36 +11,53 @@ import {
 import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
-import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
 import { LanguageService } from '../utils/LanguageService.js';
 
 /**
  * Support roles management command for administrators
  */
-// Create localized command data - will be dynamically updated based on guild language
-export const data = new LocalizedCommandBuilder('supportRoles')
-    .setLocalizedInfo('en') // Default to English for initial registration
+// Create command data with English names and descriptions
+export const data = new SlashCommandBuilder()
+    .setName('support-roles')
+    .setDescription('Manage support staff roles for the ticket system (Administrator only)')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addLocalizedSubcommand('list', 'en')
-    .addLocalizedSubcommand('add', 'en', (subcommand) => {
-        return subcommand.addRoleOption(option =>
-            option
-                .setName('role')
-                .setDescription('The role to add as support staff')
-                .setRequired(true)
-        );
-    })
-    .addLocalizedSubcommand('remove', 'en', (subcommand) => {
-        return subcommand.addRoleOption(option =>
-            option
-                .setName('role')
-                .setDescription('The role to remove from support staff')
-                .setRequired(true)
-        );
-    })
-    .addLocalizedSubcommand('clear', 'en')
-    .addLocalizedSubcommand('members', 'en')
-    .build();
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('list')
+            .setDescription('List all configured support staff roles')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('add')
+            .setDescription('Add a role as support staff')
+            .addRoleOption(option =>
+                option
+                    .setName('role')
+                    .setDescription('The role to add as support staff')
+                    .setRequired(true)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('remove')
+            .setDescription('Remove a role from support staff')
+            .addRoleOption(option =>
+                option
+                    .setName('role')
+                    .setDescription('The role to remove from support staff')
+                    .setRequired(true)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('clear')
+            .setDescription('Remove all support staff roles')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('members')
+            .setDescription('List all members with support staff roles')
+    );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();

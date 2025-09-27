@@ -1,4 +1,5 @@
 import { 
+    SlashCommandBuilder,
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     TextDisplayBuilder,
@@ -19,18 +20,17 @@ import {
 } from 'discord.js';
 import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { ErrorLogger } from '../utils/ErrorLogger';
-import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
 import { LanguageService } from '../utils/LanguageService.js';
 
 /**
  * Interactive setup wizard command for configuring the ticket system
  * Uses Discord's Components V2 system for a user-friendly experience
  */
-// Create localized command data - will be dynamically updated based on guild language
-export const data = new LocalizedCommandBuilder('setupWizard')
-    .setLocalizedInfo('en') // Default to English for initial registration
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .build();
+// Create command data with English names and descriptions
+export const data = new SlashCommandBuilder()
+    .setName('setup-wizard')
+    .setDescription('Interactive setup wizard for the ticket system (Administrator only)')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();

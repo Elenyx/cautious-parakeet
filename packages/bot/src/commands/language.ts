@@ -10,28 +10,37 @@ import { GuildConfigDAO } from '../database/GuildConfigDAO.js';
 import { WelcomeMessageBuilder, SUPPORTED_LANGUAGES, SupportedLanguage } from '../utils/WelcomeMessageBuilder.js';
 import { ErrorLogger } from '../utils/ErrorLogger.js';
 import { LanguageService } from '../utils/LanguageService.js';
-import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
-import { CommandRegistrationManager } from '../utils/CommandRegistrationManager.js';
 
-// Create localized command data - will be dynamically updated based on guild language
-export const data = new LocalizedCommandBuilder('language')
-    .setLocalizedInfo('en') // Default to English for initial registration
+// Create command data with English names and descriptions
+export const data = new SlashCommandBuilder()
+    .setName('language')
+    .setDescription('Manage bot language settings')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-    .addLocalizedSubcommand('set', 'en', (subcommand) => {
-        return subcommand.addStringOption(option => {
-            const languageService = LanguageService.getInstance();
-            const choices = languageService.getLanguageChoices('en');
-            
-            return option
-                .setName('language')
-                .setDescription('The language to set')
-                .setRequired(true)
-                .addChoices(...choices);
-        });
-    })
-    .addLocalizedSubcommand('current', 'en')
-    .addLocalizedSubcommand('list', 'en')
-    .build();
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('set')
+            .setDescription('Set the bot language for this server')
+            .addStringOption(option => {
+                const languageService = LanguageService.getInstance();
+                const choices = languageService.getLanguageChoices('en');
+                
+                return option
+                    .setName('language')
+                    .setDescription('The language to set')
+                    .setRequired(true)
+                    .addChoices(...choices);
+            })
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('current')
+            .setDescription('Show the current bot language')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('list')
+            .setDescription('Show all available languages')
+    );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();
@@ -117,14 +126,7 @@ async function handleSetLanguage(
     // Update guild configuration
     await languageService.setGuildLanguage(interaction.guildId!, language);
 
-    // Update commands for this guild to use the new language
-    const commandRegistrationManager = CommandRegistrationManager.getInstance();
-    try {
-        await commandRegistrationManager.updateGuildCommands(interaction.guildId!, language);
-    } catch (error) {
-        console.error('Error updating guild commands:', error);
-        // Continue with the language change even if command update fails
-    }
+    // Commands now use English names/descriptions only, so no need to update command registration
 
     const languageInfo = languageService.getLanguageInfo(language);
     
@@ -220,14 +222,7 @@ export async function handleLanguageSelector(interaction: StringSelectMenuIntera
         // Update guild configuration
         await languageService.setGuildLanguage(interaction.guildId, selectedLanguage);
 
-        // Update commands for this guild to use the new language
-        const commandRegistrationManager = CommandRegistrationManager.getInstance();
-        try {
-            await commandRegistrationManager.updateGuildCommands(interaction.guildId, selectedLanguage);
-        } catch (error) {
-            console.error('Error updating guild commands:', error);
-            // Continue with the language change even if command update fails
-        }
+        // Commands now use English names/descriptions only, so no need to update command registration
 
         const languageInfo = languageService.getLanguageInfo(selectedLanguage);
         
