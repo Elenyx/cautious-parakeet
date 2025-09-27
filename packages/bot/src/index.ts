@@ -8,6 +8,7 @@ import { DatabaseManager } from "./database/DatabaseManager.js";
 import { TranscriptUtil } from "./utils/TranscriptUtil.js";
 import { ErrorLogger } from "./utils/ErrorLogger.js";
 import { DiscordApiService } from "./utils/DiscordApiService.js";
+import { CommandRegistrationManager } from "./utils/CommandRegistrationManager.js";
 
 config();
 
@@ -166,6 +167,10 @@ client.once(Events.ClientReady, async () => {
     // Initialize Discord API service for caching and rate limiting
     DiscordApiService.initialize(client);
     console.log("Discord API service initialized with caching and rate limiting");
+
+    // Initialize Command Registration Manager
+    CommandRegistrationManager.getInstance().initialize(client);
+    console.log("Command Registration Manager initialized");
 
     // Start internal HTTP server for dashboard data
     try {

@@ -14,6 +14,7 @@ import {
     SeparatorSpacingSize,
     type MessageActionRowComponentBuilder
 } from 'discord.js';
+import { LanguageService } from './LanguageService.js';
 
 /**
  * Supported languages for the bot
@@ -215,7 +216,8 @@ export class WelcomeMessageBuilder {
      * Build the complete welcome message with Components V2
      */
     public build() {
-        const messages = WELCOME_MESSAGES[this.language];
+        const languageService = LanguageService.getInstance();
+        const messages = languageService.getLocalizedWelcomeMessage(this.language);
         
         // Banner URL for ImageKit
         const bannerUrl = 'https://ik.imagekit.io/elenyx/Banner.png';
@@ -228,7 +230,8 @@ export class WelcomeMessageBuilder {
             .setMaxValues(1);
 
         // Add language options
-        Object.entries(SUPPORTED_LANGUAGES).forEach(([code, lang]) => {
+        const allLanguages = languageService.getAllSupportedLanguages();
+        Object.entries(allLanguages).forEach(([code, lang]) => {
             const option = new StringSelectMenuOptionBuilder()
                 .setLabel(lang.name)
                 .setValue(code)

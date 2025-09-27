@@ -1,5 +1,4 @@
 import { 
-    SlashCommandBuilder, 
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     EmbedBuilder
@@ -7,53 +6,54 @@ import {
 import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { TranscriptUtil } from '../utils/TranscriptUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
+import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
+import { LanguageService } from '../utils/LanguageService.js';
 
 /**
  * Debug command for testing and troubleshooting the ticket system
  */
-export const data = new SlashCommandBuilder()
-    .setName('debug')
-    .setDescription('Debug and test ticket system functionality (Administrator only)')
+// Create localized command data - will be dynamically updated based on guild language
+export const data = new LocalizedCommandBuilder('debug')
+    .setLocalizedInfo('en') // Default to English for initial registration
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addSubcommand(subcommand =>
-        subcommand
-            .setName('config')
-            .setDescription('Check current guild configuration')
-    )
-    .addSubcommand(subcommand =>
-        subcommand
-            .setName('transcript')
-            .setDescription('Test transcript generation for a specific ticket')
-            .addStringOption(option =>
-                option
-                    .setName('ticket_id')
-                    .setDescription('The ticket ID to generate transcript for')
-                    .setRequired(true)
-            )
-    );
+    .addLocalizedSubcommand('config', 'en')
+    .addLocalizedSubcommand('transcript', 'en', (subcommand) => {
+        return subcommand.addStringOption(option =>
+            option
+                .setName('ticket_id')
+                .setDescription('The ticket ID to generate transcript for')
+                .setRequired(true)
+        );
+    })
+    .build();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-    const subcommand = interaction.options.getSubcommand();
+    const errorLogger = ErrorLogger.getInstance();
+    const languageService = LanguageService.getInstance();
 
     try {
+        // Get the current language for this guild
+        const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+
+        const subcommand = interaction.options.getSubcommand();
         const guildConfigDAO = new GuildConfigDAO();
         
         switch (subcommand) {
             case 'config':
-                await handleConfigDebug(interaction, guildConfigDAO);
+                await handleConfigDebug(interaction, guildConfigDAO, currentLanguage);
                 break;
             case 'transcript':
-                await handleTranscriptDebug(interaction, guildConfigDAO);
+                await handleTranscriptDebug(interaction, guildConfigDAO, currentLanguage);
                 break;
             default:
+                const unknownSubcommandError = languageService.getError('unknownSubcommand', currentLanguage);
                 await interaction.reply({
-                    content: '❌ Unknown debug subcommand.',
+                    content: unknownSubcommandError,
                     ephemeral: true
                 });
         }
     } catch (error) {
         console.error('Debug command error:', error);
-        const errorLogger = ErrorLogger.getInstance();
         await errorLogger.logError(error as Error, {
             guildId: interaction.guildId!,
             errorType: 'Debug Command Error',
@@ -61,8 +61,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
         
         if (!interaction.replied) {
+            const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+            const errorMessage = languageService.getError('debugError', currentLanguage);
             await interaction.reply({
-                content: '❌ An error occurred while executing the debug command.',
+                content: errorMessage,
                 ephemeral: true
             });
         }
@@ -74,7 +76,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
  */
 async function handleConfigDebug(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: GuildConfigDAO
+    guildConfigDAO: GuildConfigDAO,
+    language: string = 'en'
 ) {
     const guildId = interaction.guildId!;
     
@@ -151,7 +154,8 @@ async function handleConfigDebug(
  */
 async function handleTranscriptDebug(
     interaction: ChatInputCommandInteraction,
-    guildConfigDAO: GuildConfigDAO
+    guildConfigDAO: GuildConfigDAO,
+    language: string = 'en'
 ) {
     const ticketId = interaction.options.getString('ticket_id', true);
     const guildId = interaction.guildId!;

@@ -1,5 +1,4 @@
 import { 
-    SlashCommandBuilder, 
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     EmbedBuilder,
@@ -10,53 +9,41 @@ import {
 import { StatsHandler } from '../utils/StatsHandler';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
+import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
+import { LanguageService } from '../utils/LanguageService.js';
 // Buffer is available globally in Node.js
 
 /**
  * Stats command to display ticket statistics and analytics
  */
-export const data = new SlashCommandBuilder()
-    .setName('stats')
-    .setDescription('View ticket statistics and analytics (Support Staff only)')
-    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
-        subcommand
-            .setName('overview')
-            .setDescription('View general ticket statistics overview')
-    )
-    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
-        subcommand
-            .setName('detailed')
-            .setDescription('View detailed ticket statistics')
-    )
-    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
-        subcommand
-            .setName('export')
-            .setDescription('Export statistics to JSON file')
-    )
-    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
-        subcommand
-            .setName('user')
-            .setDescription('View statistics for a specific user')
-            .addUserOption((option: SlashCommandUserOption) =>
-                option
-                    .setName('user')
-                    .setDescription('User to view statistics for')
-                    .setRequired(true)
-            )
-    )
-    .addSubcommand((subcommand: SlashCommandSubcommandBuilder) =>
-        subcommand
-            .setName('realtime')
-            .setDescription('View real-time ticket statistics')
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels);
+// Create localized command data - will be dynamically updated based on guild language
+export const data = new LocalizedCommandBuilder('stats')
+    .setLocalizedInfo('en') // Default to English for initial registration
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+    .addLocalizedSubcommand('overview', 'en')
+    .addLocalizedSubcommand('detailed', 'en')
+    .addLocalizedSubcommand('export', 'en')
+    .addLocalizedSubcommand('user', 'en', (subcommand) => {
+        return subcommand.addUserOption((option: SlashCommandUserOption) =>
+            option
+                .setName('user')
+                .setDescription('User to view statistics for')
+                .setRequired(true)
+        );
+    })
+    .addLocalizedSubcommand('realtime', 'en')
+    .build();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();
     const statsHandler = StatsHandler.getInstance();
     const permissionUtil = PermissionUtil.getInstance();
+    const languageService = LanguageService.getInstance();
 
     try {
+        // Get the current language for this guild
+        const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+
         // Get the guild member
         const guild = interaction.guild!;
         const member = await guild.members.fetch(interaction.user.id);
@@ -65,8 +52,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const hasPermission = await permissionUtil.hasSupportStaffPermissions(member);
 
         if (!hasPermission) {
+            const errorMessage = languageService.getError('supportStaffRequired', currentLanguage);
             await interaction.reply({
-                content: '❌ You need to be a support staff member or administrator to view statistics.',
+                content: errorMessage,
                 ephemeral: true
             });
             return;
@@ -84,8 +72,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             case 'export':
                 // Export requires Administrator permissions
                 if (!permissionUtil.hasAdminPermissions(member)) {
+                    const errorMessage = languageService.getError('adminRequired', currentLanguage);
                     await interaction.reply({
-                        content: '❌ You need Administrator permissions to export statistics.',
+                        content: errorMessage,
                         ephemeral: true
                     });
                     return;
@@ -95,8 +84,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             case 'user':
                 // User stats require Administrator permissions
                 if (!permissionUtil.hasAdminPermissions(member)) {
+                    const errorMessage = languageService.getError('adminRequired', currentLanguage);
                     await interaction.reply({
-                        content: '❌ You need Administrator permissions to view individual user statistics.',
+                        content: errorMessage,
                         ephemeral: true
                     });
                     return;
@@ -107,8 +97,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 await handleRealtimeStats(interaction, statsHandler);
                 break;
             default:
+                const unknownSubcommandError = languageService.getError('unknownSubcommand', currentLanguage);
                 await interaction.reply({
-                    content: '❌ Unknown subcommand.',
+                    content: unknownSubcommandError,
                     ephemeral: true
                 });
         }
@@ -125,7 +116,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             }
         });
 
-        const errorMessage = '❌ An error occurred while retrieving statistics. Please try again later.';
+        const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+        const errorMessage = languageService.getError('statsError', currentLanguage);
         
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({ content: errorMessage, ephemeral: true });

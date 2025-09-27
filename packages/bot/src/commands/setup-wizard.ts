@@ -1,5 +1,4 @@
 import { 
-    SlashCommandBuilder, 
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     TextDisplayBuilder,
@@ -20,30 +19,38 @@ import {
 } from 'discord.js';
 import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { ErrorLogger } from '../utils/ErrorLogger';
+import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
+import { LanguageService } from '../utils/LanguageService.js';
 
 /**
  * Interactive setup wizard command for configuring the ticket system
  * Uses Discord's Components V2 system for a user-friendly experience
  */
-export const data = new SlashCommandBuilder()
-    .setName('setup-wizard')
-    .setDescription('Interactive setup wizard for the ticket system (Administrator only)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+// Create localized command data - will be dynamically updated based on guild language
+export const data = new LocalizedCommandBuilder('setupWizard')
+    .setLocalizedInfo('en') // Default to English for initial registration
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .build();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();
+    const languageService = LanguageService.getInstance();
 
     try {
+        // Get the current language for this guild
+        const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+
         // Check if user has admin permissions
         if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+            const errorMessage = languageService.getError('adminRequired', currentLanguage);
             await interaction.reply({
-                content: '❌ You need Administrator permissions to use this command.',
+                content: errorMessage,
                 ephemeral: true
             });
             return;
         }
 
-        await showSetupWizard(interaction);
+        await showSetupWizard(interaction, currentLanguage);
 
     } catch (error) {
         console.error('Error in setup wizard command:', error);
@@ -53,7 +60,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             commandName: 'setup-wizard'
         });
 
-        const errorMessage = '❌ An error occurred while processing the setup wizard.';
+        const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+        const errorMessage = languageService.getError('setupError', currentLanguage);
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({ content: errorMessage, ephemeral: true });
         } else {
@@ -65,7 +73,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 /**
  * Show the main setup wizard interface
  */
-export async function showSetupWizard(interaction: ChatInputCommandInteraction | ButtonInteraction | ChannelSelectMenuInteraction | RoleSelectMenuInteraction) {
+export async function showSetupWizard(interaction: ChatInputCommandInteraction | ButtonInteraction | ChannelSelectMenuInteraction | RoleSelectMenuInteraction, language: string = 'en') {
     const guildConfigDAO = new GuildConfigDAO();
     const guildId = interaction.guildId!;
     

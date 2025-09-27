@@ -1,5 +1,4 @@
 import { 
-    SlashCommandBuilder, 
     ChatInputCommandInteraction, 
     PermissionFlagsBits,
     EmbedBuilder,
@@ -11,62 +10,52 @@ import {
 import { GuildConfigDAO } from '../database/GuildConfigDAO';
 import { PermissionUtil } from '../utils/PermissionUtil';
 import { ErrorLogger } from '../utils/ErrorLogger';
+import { LocalizedCommandBuilder } from '../utils/LocalizedCommandBuilder.js';
+import { LanguageService } from '../utils/LanguageService.js';
 
 /**
  * Support roles management command for administrators
  */
-export const data = new SlashCommandBuilder()
-    .setName('support-roles')
-    .setDescription('Manage support staff roles for the ticket system (Administrator only)')
+// Create localized command data - will be dynamically updated based on guild language
+export const data = new LocalizedCommandBuilder('supportRoles')
+    .setLocalizedInfo('en') // Default to English for initial registration
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addSubcommand(subcommand =>
-        subcommand
-            .setName('list')
-            .setDescription('List all configured support staff roles')
-    )
-    .addSubcommand(subcommand =>
-        subcommand
-            .setName('add')
-            .setDescription('Add a role as support staff')
-            .addRoleOption(option =>
-                option
-                    .setName('role')
-                    .setDescription('The role to add as support staff')
-                    .setRequired(true)
-            )
-    )
-    .addSubcommand(subcommand =>
-        subcommand
-            .setName('remove')
-            .setDescription('Remove a role from support staff')
-            .addRoleOption(option =>
-                option
-                    .setName('role')
-                    .setDescription('The role to remove from support staff')
-                    .setRequired(true)
-            )
-    )
-    .addSubcommand(subcommand =>
-        subcommand
-            .setName('clear')
-            .setDescription('Remove all support staff roles')
-    )
-    .addSubcommand(subcommand =>
-        subcommand
-            .setName('members')
-            .setDescription('List all members with support staff roles')
-    );
+    .addLocalizedSubcommand('list', 'en')
+    .addLocalizedSubcommand('add', 'en', (subcommand) => {
+        return subcommand.addRoleOption(option =>
+            option
+                .setName('role')
+                .setDescription('The role to add as support staff')
+                .setRequired(true)
+        );
+    })
+    .addLocalizedSubcommand('remove', 'en', (subcommand) => {
+        return subcommand.addRoleOption(option =>
+            option
+                .setName('role')
+                .setDescription('The role to remove from support staff')
+                .setRequired(true)
+        );
+    })
+    .addLocalizedSubcommand('clear', 'en')
+    .addLocalizedSubcommand('members', 'en')
+    .build();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const errorLogger = ErrorLogger.getInstance();
     const permissionUtil = PermissionUtil.getInstance();
     const guildConfigDAO = new GuildConfigDAO();
+    const languageService = LanguageService.getInstance();
 
     try {
+        // Get the current language for this guild
+        const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+
         // Check if user has admin permissions
         if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+            const errorMessage = languageService.getError('adminRequired', currentLanguage);
             await interaction.reply({
-                content: '❌ You need Administrator permissions to manage support roles.',
+                content: errorMessage,
                 ephemeral: true
             });
             return;
@@ -91,8 +80,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 await handleMembers(interaction, permissionUtil);
                 break;
             default:
+                const unknownSubcommandError = languageService.getError('unknownSubcommand', currentLanguage);
                 await interaction.reply({
-                    content: '❌ Unknown subcommand.',
+                    content: unknownSubcommandError,
                     ephemeral: true
                 });
         }
@@ -105,7 +95,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             commandName: 'support-roles'
         });
 
-        const errorMessage = '❌ An error occurred while managing support roles.';
+        const currentLanguage = await languageService.getGuildLanguage(interaction.guildId!);
+        const errorMessage = languageService.getError('supportRolesError', currentLanguage);
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({ content: errorMessage, ephemeral: true });
         } else {
