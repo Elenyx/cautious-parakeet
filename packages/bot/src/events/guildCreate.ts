@@ -15,36 +15,42 @@ export async function execute(guild: Guild) {
     try {
         console.log(`[GUILD_CREATE] Bot joined new guild: ${guild.name} (${guild.id})`);
         
-        // Get the Discord API service instance
-        const discordApiService = DiscordApiService.getInstance();
-        
-        // Pre-cache all guild data for the new guild (use allSettled to handle individual failures)
-        const cacheResults = await Promise.allSettled([
-            discordApiService.getGuildData(guild.id, true),
-            discordApiService.getGuildMembers(guild.id, true),
-            discordApiService.getGuildChannels(guild.id, true),
-            discordApiService.getGuildRoles(guild.id, true)
-        ]);
-        
-        // Log any failures but don't let them stop the welcome message
-        cacheResults.forEach((result, index) => {
-            const operations = ['guild data', 'guild members', 'guild channels', 'guild roles'];
-            if (result.status === 'rejected') {
-                console.warn(`[GUILD_CREATE] Failed to cache ${operations[index]} for ${guild.name}:`, result.reason);
-            }
-        });
-        
-        console.log(`[GUILD_CREATE] Pre-cached all data for new guild: ${guild.name} (${guild.id})`);
-        
-        // Initialize guild configuration with default language
+        // Initialize guild configuration with default language first
         const guildConfigDAO = new GuildConfigDAO();
         await guildConfigDAO.upsertGuildConfig({
             guild_id: guild.id,
             language: 'en' // Default to English
         });
         
-        // Send welcome message
+        // Send welcome message immediately
         await sendWelcomeMessage(guild);
+        
+        // Pre-cache all guild data in the background (non-blocking)
+        const discordApiService = DiscordApiService.getInstance();
+        setImmediate(async () => {
+            try {
+                console.log(`[GUILD_CREATE] Starting background pre-caching for: ${guild.name} (${guild.id})`);
+                
+                const cacheResults = await Promise.allSettled([
+                    discordApiService.getGuildData(guild.id, true),
+                    discordApiService.getGuildMembers(guild.id, true),
+                    discordApiService.getGuildChannels(guild.id, true),
+                    discordApiService.getGuildRoles(guild.id, true)
+                ]);
+                
+                // Log any failures but don't let them stop the welcome message
+                cacheResults.forEach((result, index) => {
+                    const operations = ['guild data', 'guild members', 'guild channels', 'guild roles'];
+                    if (result.status === 'rejected') {
+                        console.warn(`[GUILD_CREATE] Failed to cache ${operations[index]} for ${guild.name}:`, result.reason);
+                    }
+                });
+                
+                console.log(`[GUILD_CREATE] Background pre-caching completed for: ${guild.name} (${guild.id})`);
+            } catch (error) {
+                console.error(`[GUILD_CREATE] Error in background pre-caching for ${guild.name}:`, error);
+            }
+        });
         
     } catch (error) {
         console.error(`[GUILD_CREATE] Error handling new guild ${guild.id}:`, error);
