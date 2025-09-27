@@ -8,7 +8,8 @@ import {
     StringSelectMenuOptionBuilder,
     ActionRowBuilder,
     MessageFlags,
-    AttachmentBuilder
+    MediaGalleryBuilder,
+    MediaGalleryItemBuilder
 } from 'discord.js';
 
 /**
@@ -213,9 +214,8 @@ export class WelcomeMessageBuilder {
     public build() {
         const messages = WELCOME_MESSAGES[this.language];
         
-        // Create the banner attachment using URL
+        // Banner URL for ImageKit
         const bannerUrl = 'https://ik.imagekit.io/elenyx/Banner.png';
-        const banner = new AttachmentBuilder(bannerUrl, { name: 'banner.png' });
 
         // Main container with accent color
         const container = new ContainerBuilder()
@@ -234,6 +234,14 @@ export class WelcomeMessageBuilder {
                     .setLabel('👋')
                     .setCustomId('welcome_greeting')
                     .setDisabled(true)
+            );
+
+        // Banner section using MediaGallery
+        const bannerGallery = new MediaGalleryBuilder()
+            .addItems(
+                new MediaGalleryItemBuilder()
+                    .setURL(bannerUrl)
+                    .setDescription('TicketMesh Banner')
             );
 
         // Basic usage section
@@ -281,13 +289,13 @@ export class WelcomeMessageBuilder {
         // Add all sections to container
         container
             .addSectionComponents(welcomeSection)
+            .addMediaGalleryComponents(bannerGallery)
             .addSectionComponents(usageSection)
             .addSectionComponents(linksSection)
             .addSectionComponents(languageSection);
 
         return {
-            components: [container],
-            files: [banner]
+            components: [container]
         };
     }
 
